@@ -1,5 +1,14 @@
 # Architecture (F1)
 
+## iOS extension in this fork
+
+The user requested an iPhone adaptation. `app-ios/` is a SwiftUI client using
+CallKit, PushKit and LiveKit Swift. The relay accepts `platform: ios`, stores
+separate APNs and VoIP tokens per device, and routes only incoming call invitations
+to the VoIP topic. Messages and call updates use regular APNs. Android's FCM path,
+daemon tools and call state machine remain shared. APNs uses Node's HTTP/2 client
+and the existing jose dependency. See [ios.md](ios.md) for signing and test limits.
+
 > Status: M1 done and tested on a real phone. M2 (calls) implemented and tested on a
 > Pixel 6 / Android 16; LiveKit in the deploy compose still to do. Voice AI lands in M3.
 

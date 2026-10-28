@@ -1,0 +1,497 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1C832635DBB814936194759B /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = ED3D4EAFB3DEAD9AC2E8C83E /* LiveKit */; };
+		51C10AFD7131EB631385BB24 /* Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8642F44BE32B6007909F55 /* Protocol.swift */; };
+		586F8082DAFD296F01BD3CD2 /* RelayAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = AECD6160B60B006F5A244523 /* RelayAPI.swift */; };
+		891DD19BAB6C935F68F4B261 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 65EED3156D42502012310209 /* Assets.xcassets */; };
+		A8A77B022885817DC76E04F5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C98F1B11ACEB9F69F07586F /* AppDelegate.swift */; };
+		ABF2CEF7672C56747B5471FE /* CallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BD71229EA2CDA93B35D79DB /* CallManager.swift */; };
+		AE961BF6133A01C457A6DF48 /* PairingMessagesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 282E9B66D530FE3697504735 /* PairingMessagesTests.swift */; };
+		CA905F6BFFF0547E43D8CA84 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF8AAB372590A333E24F5D8 /* KeychainStore.swift */; };
+		E6A4031D68C4DE0EBFA3395B /* AgentringApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2839540046A3335EF2F27EA6 /* AgentringApp.swift */; };
+		F89C0B8C1145F8022DC13335 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3E64DFC3AD66FF82CE17E3 /* AppModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		92C6BA12D912218860ACE4E9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F25E0B666A08B9792BC9D846 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E430C683465AA9C990652651;
+			remoteInfo = Agentring;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		282E9B66D530FE3697504735 /* PairingMessagesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingMessagesTests.swift; sourceTree = "<group>"; };
+		2839540046A3335EF2F27EA6 /* AgentringApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentringApp.swift; sourceTree = "<group>"; };
+		2BD71229EA2CDA93B35D79DB /* CallManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallManager.swift; sourceTree = "<group>"; };
+		2C3E64DFC3AD66FF82CE17E3 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		5B5C85993E2E103CBB7C7E7D /* AgentringUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AgentringUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		65EED3156D42502012310209 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6AF8AAB372590A333E24F5D8 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		6C98F1B11ACEB9F69F07586F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		8C8642F44BE32B6007909F55 /* Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocol.swift; sourceTree = "<group>"; };
+		AECD6160B60B006F5A244523 /* RelayAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayAPI.swift; sourceTree = "<group>"; };
+		F59934E9DE8171831AC472FF /* Agentring.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Agentring.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1DAF9366BC17AD8416F42821 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1C832635DBB814936194759B /* LiveKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0B18BE09A28847AF9981365E /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				282E9B66D530FE3697504735 /* PairingMessagesTests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		4FA9809D4F06587ADD3E752C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				65EED3156D42502012310209 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		69923A9AC51020512BB16EE5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F59934E9DE8171831AC472FF /* Agentring.app */,
+				5B5C85993E2E103CBB7C7E7D /* AgentringUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		71347198B6F9D4A4C9D106C6 /* AgentringCore */ = {
+			isa = PBXGroup;
+			children = (
+				8C8642F44BE32B6007909F55 /* Protocol.swift */,
+				AECD6160B60B006F5A244523 /* RelayAPI.swift */,
+			);
+			name = AgentringCore;
+			path = Sources/AgentringCore;
+			sourceTree = "<group>";
+		};
+		904CC7D1DB763BE40688124E /* Agentring */ = {
+			isa = PBXGroup;
+			children = (
+				2839540046A3335EF2F27EA6 /* AgentringApp.swift */,
+				6C98F1B11ACEB9F69F07586F /* AppDelegate.swift */,
+				2C3E64DFC3AD66FF82CE17E3 /* AppModel.swift */,
+				2BD71229EA2CDA93B35D79DB /* CallManager.swift */,
+				6AF8AAB372590A333E24F5D8 /* KeychainStore.swift */,
+			);
+			name = Agentring;
+			path = Sources/Agentring;
+			sourceTree = "<group>";
+		};
+		CEAFEBB7E406391BCCED8978 = {
+			isa = PBXGroup;
+			children = (
+				904CC7D1DB763BE40688124E /* Agentring */,
+				71347198B6F9D4A4C9D106C6 /* AgentringCore */,
+				4FA9809D4F06587ADD3E752C /* Resources */,
+				0B18BE09A28847AF9981365E /* UITests */,
+				69923A9AC51020512BB16EE5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DB71F840AE79537C2AA70A40 /* AgentringUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2392E49C043AE66E8E0C324D /* Build configuration list for PBXNativeTarget "AgentringUITests" */;
+			buildPhases = (
+				84FDDF43C29EC9310ABEAC05 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9375083074BE3CC9923D8C83 /* PBXTargetDependency */,
+			);
+			name = AgentringUITests;
+			packageProductDependencies = (
+			);
+			productName = AgentringUITests;
+			productReference = 5B5C85993E2E103CBB7C7E7D /* AgentringUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		E430C683465AA9C990652651 /* Agentring */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 593F7883E22AECF4F913C2DD /* Build configuration list for PBXNativeTarget "Agentring" */;
+			buildPhases = (
+				E33059CE07214C29C814A809 /* Sources */,
+				43F14E39B69A7136BD2CB5AF /* Resources */,
+				1DAF9366BC17AD8416F42821 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Agentring;
+			packageProductDependencies = (
+				ED3D4EAFB3DEAD9AC2E8C83E /* LiveKit */,
+			);
+			productName = Agentring;
+			productReference = F59934E9DE8171831AC472FF /* Agentring.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F25E0B666A08B9792BC9D846 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					DB71F840AE79537C2AA70A40 = {
+						ProvisioningStyle = Automatic;
+						TestTargetID = E430C683465AA9C990652651;
+					};
+					E430C683465AA9C990652651 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = DB4CEBE4CF0D9CB6C9BFFA83 /* Build configuration list for PBXProject "Agentring" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CEAFEBB7E406391BCCED8978;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DADF77D0468F4477458DF276 /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 69923A9AC51020512BB16EE5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E430C683465AA9C990652651 /* Agentring */,
+				DB71F840AE79537C2AA70A40 /* AgentringUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		43F14E39B69A7136BD2CB5AF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				891DD19BAB6C935F68F4B261 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		84FDDF43C29EC9310ABEAC05 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AE961BF6133A01C457A6DF48 /* PairingMessagesTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E33059CE07214C29C814A809 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6A4031D68C4DE0EBFA3395B /* AgentringApp.swift in Sources */,
+				A8A77B022885817DC76E04F5 /* AppDelegate.swift in Sources */,
+				F89C0B8C1145F8022DC13335 /* AppModel.swift in Sources */,
+				ABF2CEF7672C56747B5471FE /* CallManager.swift in Sources */,
+				CA905F6BFFF0547E43D8CA84 /* KeychainStore.swift in Sources */,
+				51C10AFD7131EB631385BB24 /* Protocol.swift in Sources */,
+				586F8082DAFD296F01BD3CD2 /* RelayAPI.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9375083074BE3CC9923D8C83 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E430C683465AA9C990652651 /* Agentring */;
+			targetProxy = 92C6BA12D912218860ACE4E9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		246DD0895D682F335203AE00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.agentring.ios.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Agentring;
+			};
+			name = Release;
+		};
+		350126C3EE36D45CCB94C4C6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.3.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5C87FA7AA3F77390C7D97D88 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APNS_ENVIRONMENT = development;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/Agentring.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = Resources/Simulator.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = agentring;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.agentring.ios;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		97F3A2A74501B1DFF02CA67B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.3.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D9CA86F974842EB559A0EF22 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.agentring.ios.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Agentring;
+			};
+			name = Debug;
+		};
+		F4B26871FC75B02772249724 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APNS_ENVIRONMENT = production;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/Agentring.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = Resources/Simulator.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = agentring;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.agentring.ios;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2392E49C043AE66E8E0C324D /* Build configuration list for PBXNativeTarget "AgentringUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D9CA86F974842EB559A0EF22 /* Debug */,
+				246DD0895D682F335203AE00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		593F7883E22AECF4F913C2DD /* Build configuration list for PBXNativeTarget "Agentring" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C87FA7AA3F77390C7D97D88 /* Debug */,
+				F4B26871FC75B02772249724 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DB4CEBE4CF0D9CB6C9BFFA83 /* Build configuration list for PBXProject "Agentring" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97F3A2A74501B1DFF02CA67B /* Debug */,
+				350126C3EE36D45CCB94C4C6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		DADF77D0468F4477458DF276 /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/client-sdk-swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		ED3D4EAFB3DEAD9AC2E8C83E /* LiveKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DADF77D0468F4477458DF276 /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
+			productName = LiveKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F25E0B666A08B9792BC9D846 /* Project object */;
+}

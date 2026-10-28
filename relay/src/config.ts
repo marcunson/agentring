@@ -19,12 +19,20 @@ export interface Config {
   ringTimeoutS: number;
   insecureDev: boolean;
   livekit?: LiveKitConfig;
+  apns?: ApnsConfig;
   fcm?: {
     serviceAccountFile: string;
     client: FcmClientConfig;
     /** Overridable for tests. */
     apiBase: string;
   };
+}
+
+export interface ApnsConfig {
+  keyFile: string;
+  keyId: string;
+  teamId: string;
+  bundleId: string;
 }
 
 export interface LiveKitConfig {
@@ -96,6 +104,13 @@ export function loadConfig(): Config {
     };
   }
 
+  let apns: ApnsConfig | undefined;
+  const apple = ["APNS_KEY_FILE", "APNS_KEY_ID", "APNS_TEAM_ID", "APNS_BUNDLE_ID"] as const;
+  if (apple.some((key) => env(key))) {
+    if (!apple.every((key) => env(key))) throw new Error(`Set all of ${apple.join(", ")} to enable Apple push`);
+    apns = { keyFile: env("APNS_KEY_FILE")!, keyId: env("APNS_KEY_ID")!, teamId: env("APNS_TEAM_ID")!, bundleId: env("APNS_BUNDLE_ID")! };
+  }
+
   let livekit: LiveKitConfig | undefined;
   const lkKey = env("LIVEKIT_API_KEY");
   // Prefer a file (mounted read-only) so the secret never sits in the environment,
@@ -126,6 +141,7 @@ export function loadConfig(): Config {
     ringTimeoutS: Number(env("AGENTRING_RING_TIMEOUT_S", "30")),
     insecureDev,
     fcm,
+    apns,
     livekit,
   };
 }

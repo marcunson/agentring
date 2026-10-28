@@ -1,0 +1,52 @@
+name: iOS
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Swift protocol tests + unsigned simulator build
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: Core protocol tests
+        working-directory: app-ios
+        run: swift test
+      - name: Build iPhone app
+        working-directory: app-ios
+        run: >-
+          xcodebuild -project Agentring.xcodeproj -scheme Agentring
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath DerivedData
+          -onlyUsePackageVersionsFromResolvedFile
+          -packageAuthorizationProvider netrc
+          CODE_SIGNING_ALLOWED=NO build
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: relay/package-lock.json
+      - name: Pairing and messages on simulator
+        run: |
+          npm ci --prefix relay --no-audit --no-fund
+          npm run build --prefix relay
+          HOST=127.0.0.1 PORT=18080 AGENTRING_PUBLIC_URL=http://127.0.0.1:18080 \
+            AGENTRING_INSECURE_DEV=1 AGENTRING_DATA_DIR=:memory: \
+            AGENTRING_API_KEY=ak_ios_ui_test node relay/dist/main.js > "$RUNNER_TEMP/ios-relay.log" 2>&1 &
+          relay_pid=$!
+          trap 'kill "$relay_pid"' EXIT
+          for attempt in $(seq 1 30); do curl -sf http://127.0.0.1:18080/healthz && break; sleep 1; done
+          curl -sf http://127.0.0.1:18080/healthz
+          device=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.isAvailable and (.name | startswith("iPhone")))][0].udid')
+          test "$device" != null
+          cd app-ios
+          xcodebuild -project Agentring.xcodeproj -scheme Agentring \
+            -destination "platform=iOS Simulator,id=$device" \
+            -derivedDataPath DerivedData -packageAuthorizationProvider netrc \
+            -onlyUsePackageVersionsFromResolvedFile CODE_SIGN_IDENTITY=- test

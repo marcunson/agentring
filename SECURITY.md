@@ -1,5 +1,16 @@
 # Security policy
 
+## iOS support in this fork
+
+Apple push uses a private `.p8` key mounted on the relay (never in the app).
+Regular APNs and PushKit tokens are stored with each device and cleared on revoke.
+Apple can read push payloads, including message text and call reasons; the custom
+event payload uses the same per-device HMAC signature as Android. Only incoming
+invitations use the VoIP push type. The iOS app stores device credentials in the
+Keychain with `AfterFirstUnlockThisDeviceOnly` accessibility; messages are cached
+with file protection until the first unlock. Notification replies require device
+authentication. See [docs/ios.md](docs/ios.md).
+
 ## Reporting a vulnerability
 
 Please report vulnerabilities privately, not in public issues.

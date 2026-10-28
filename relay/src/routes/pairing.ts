@@ -15,6 +15,8 @@ interface DeviceRow {
   platform: string;
   app_version: string | null;
   fcm_token: string | null;
+  apns_token: string | null;
+  voip_token: string | null;
   created_at: number;
   last_seen_at: number | null;
   revoked_at: number | null;
@@ -24,12 +26,12 @@ export function deviceFromRow(r: DeviceRow): Device {
   return {
     device_id: r.device_id,
     name: r.name,
-    platform: "android",
+    platform: r.platform as Device["platform"],
     ...(r.app_version ? { app_version: r.app_version } : {}),
     created_at: r.created_at,
     ...(r.last_seen_at ? { last_seen_at: r.last_seen_at } : {}),
     ...(r.revoked_at ? { revoked_at: r.revoked_at } : {}),
-    has_push_token: r.fcm_token !== null,
+    has_push_token: r.platform === "ios" ? r.voip_token != null : r.fcm_token !== null,
   };
 }
 
@@ -82,7 +84,7 @@ export function pairingRoutes(app: FastifyInstance, ctx: Ctx): void {
             pairing_token: { type: "string", maxLength: 128 },
             fcm_token: { type: "string", maxLength: 4096 },
             device_name: { type: "string", minLength: 1, maxLength: 64 },
-            platform: { type: "string", enum: ["android"] },
+            platform: { type: "string", enum: ["android", "ios"] },
             app_version: { type: "string", maxLength: 32 },
           },
         },
@@ -96,6 +98,7 @@ export function pairingRoutes(app: FastifyInstance, ctx: Ctx): void {
       attempts.set(req.ip, recent);
 
       const b = req.body;
+      if (b.platform === "ios" && b.fcm_token) throw new ApiError(400, "invalid_request", "iOS devices use /v1/device/apns");
       // Atomically consume the token.
       const res = db
         .prepare("UPDATE pairing_tokens SET used_at = ? WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?")
@@ -115,7 +118,7 @@ export function pairingRoutes(app: FastifyInstance, ctx: Ctx): void {
         push_secret: pushSecret,
         relay_id: ctx.relayId,
         agent_name: ctx.cfg.agentName,
-        push_config: ctx.pushConfig,
+        push_config: b.platform === "android" ? ctx.pushConfig : null,
       };
       req.log.info({ device: deviceId, name: b.device_name }, "device paired");
       return reply.code(201).send(body);
@@ -143,6 +146,37 @@ export function pairingRoutes(app: FastifyInstance, ctx: Ctx): void {
     },
   );
 
+  app.post<{ Body: Schemas["ApnsRegistration"] }>(
+    "/v1/device/apns",
+    {
+      preHandler: requireAuth(ctx, "device"),
+      schema: { body: {
+        type: "object", additionalProperties: false, required: ["environment"],
+        properties: {
+          environment: { type: "string", enum: ["sandbox", "production"] },
+          apns_token: { type: ["string", "null"], pattern: "^[a-fA-F0-9]{32,512}$" },
+          voip_token: { type: ["string", "null"], pattern: "^[a-fA-F0-9]{32,512}$" },
+        },
+      } },
+    },
+    async (req, reply) => {
+      const p = principal(req);
+      if (p.kind !== "device") throw new Error("unreachable");
+      const row = db.prepare("SELECT platform FROM devices WHERE device_id = ?").get(p.deviceId);
+      if (row?.platform !== "ios") throw new ApiError(400, "invalid_request", "APNs is only supported for iOS devices");
+      const b = req.body;
+      // When switching signing environments, old tokens are no longer usable.
+      db.prepare(`UPDATE devices SET apns_token = CASE WHEN apns_environment = ? THEN apns_token ELSE NULL END,
+        voip_token = CASE WHEN apns_environment = ? THEN voip_token ELSE NULL END, apns_environment = ? WHERE device_id = ?`)
+        .run(b.environment, b.environment, b.environment, p.deviceId);
+      for (const column of ["apns_token", "voip_token"] as const) {
+        if (b[column] !== undefined) db.prepare(`UPDATE devices SET ${column} = ? WHERE device_id = ?`)
+          .run(b[column]?.toLowerCase() ?? null, p.deviceId);
+      }
+      return reply.code(204).send();
+    },
+  );
+
   app.get<{ Querystring: { include_revoked?: boolean } }>(
     "/v1/devices",
     {
@@ -165,7 +199,7 @@ export function pairingRoutes(app: FastifyInstance, ctx: Ctx): void {
     async (req, reply) => {
       const row = db.prepare("SELECT revoked_at FROM devices WHERE device_id = ?").get(req.params.device_id);
       if (!row) throw notFound("Device");
-      db.prepare("UPDATE devices SET revoked_at = COALESCE(revoked_at, ?), fcm_token = NULL WHERE device_id = ?").run(
+      db.prepare("UPDATE devices SET revoked_at = COALESCE(revoked_at, ?), fcm_token = NULL, apns_token = NULL, voip_token = NULL WHERE device_id = ?").run(
         Date.now(),
         req.params.device_id,
       );

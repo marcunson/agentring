@@ -24,6 +24,10 @@ services:
       AGENTRING_AGENT_NAME: ${AGENTRING_AGENT_NAME:-Agent}
       FCM_SERVICE_ACCOUNT_FILE: /secrets/firebase-service-account.json
       FCM_GOOGLE_SERVICES_FILE: /secrets/google-services.json
+      APNS_KEY_FILE: ${APNS_KEY_FILE:-}
+      APNS_KEY_ID: ${APNS_KEY_ID:-}
+      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+      APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-}
       LIVEKIT_URL: wss://${AGENTRING_DOMAIN}
       LIVEKIT_API_URL: http://livekit:7880
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:?set LIVEKIT_API_KEY}

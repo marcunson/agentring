@@ -6,7 +6,7 @@ info:
     name: Apache-2.0
     identifier: Apache-2.0
   description: |
-    REST commands + event stream between the agent daemon, the Android app and
+    REST commands + event stream between the agent daemon, Android/iOS apps and
     the relay. See docs/protocol.md for flows.
 
     Conventions:
@@ -125,6 +125,27 @@ paths:
                 fcm_token: { type: string, minLength: 1, maxLength: 4096 }
       responses:
         "204": { description: Updated. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/device/apns:
+    post:
+      tags: [devices]
+      operationId: updateApnsTokens
+      summary: Update or clear the calling iOS device's Apple push tokens.
+      description: |
+        Only iOS devices may use this endpoint. Omitted token fields are unchanged;
+        null clears a token. Environment must match the app's signing entitlement.
+        VoIP tokens receive only incoming call invitations. Alert tokens receive
+        messages and non-VoIP call state updates. Credentials stay on the relay.
+      security: [{ deviceJwt: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApnsRegistration" }
+      responses:
+        "204": { description: Tokens updated. }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
@@ -713,7 +734,7 @@ components:
           type: string
           maxLength: 4096
         device_name: { type: string, minLength: 1, maxLength: 64 }
-        platform: { type: string, enum: [android] }
+        platform: { type: string, enum: [android, ios] }
         app_version: { type: string, maxLength: 32 }
     PairResponse:
       type: object
@@ -753,12 +774,21 @@ components:
       properties:
         device_id: { $ref: "#/components/schemas/DeviceId" }
         name: { type: string }
-        platform: { type: string, enum: [android] }
+        platform: { type: string, enum: [android, ios] }
         app_version: { type: string }
         created_at: { $ref: "#/components/schemas/Timestamp" }
         last_seen_at: { $ref: "#/components/schemas/Timestamp" }
         revoked_at: { $ref: "#/components/schemas/Timestamp" }
         has_push_token: { type: boolean }
+
+    ApnsRegistration:
+      type: object
+      additionalProperties: false
+      required: [environment]
+      properties:
+        environment: { type: string, enum: [sandbox, production] }
+        apns_token: { type: [string, "null"], pattern: "^[a-fA-F0-9]{32,512}$" }
+        voip_token: { type: [string, "null"], pattern: "^[a-fA-F0-9]{32,512}$" }
 
     # ---------- calls ----------
     CreateCallRequest:
@@ -1044,7 +1074,9 @@ components:
     # ---------- push ----------
     PushData:
       description: |
-        The FCM `data` map (all values are strings). `event` is the compact JSON
+        The FCM `data` map or APNs custom fields (all values are strings).
+        APNs adds an `aps` dictionary; only call.invite uses the VoIP push type.
+        `event` is the compact JSON
         of an `Event`; `sig` = base64url(HMAC-SHA256(push_secret, event)).
       type: object
       required: [v, relay_id, event, sig]

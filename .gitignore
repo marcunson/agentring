@@ -13,6 +13,13 @@ local.properties
 *.iml
 google-services.json
 .DS_Store
+.build/
+.build-xcode/
+.packages/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.p8
 uv.lock.bak
 
 # Never commit signing keys, credentials or local env files

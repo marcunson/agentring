@@ -99,6 +99,29 @@ only the agent and the phones it targets, on the WebSocket (live and replay),
 over FCM and in `GET /v1/events`. Because of that a page of `GET /v1/events` can
 hold fewer events than `limit`; page on its `next_after_seq`.
 
+### iOS registration and Apple push
+
+An iPhone pairs with `platform: ios` using the same QR and device JWT as Android.
+It receives `push_config: null` because Firebase is not needed on iOS. The app
+registers its separate APNs alert and PushKit VoIP tokens through
+`POST /v1/device/apns` with `environment: sandbox | production`. Omitted tokens
+are unchanged; null clears a token. Changing environment clears the old tokens
+before applying the supplied ones. Only device credentials for an iOS device may
+call this endpoint. Revocation clears both tokens.
+
+APNs custom fields carry the same signed `PushData` envelope. `call.invite` to a
+user uses push type `voip`, topic `<bundle>.voip`, priority 10 and expiration 0
+(never queue a call for an offline phone). All other events use the regular app
+topic: messages are visible alerts with a reply category, call updates are
+best-effort background pushes with priority 5. Neither path carries LiveKit join
+tokens. Targeted-call filtering applies to both platforms. A stale APNs response
+clears only the failing token; the other notification channel is preserved.
+
+On iOS, incoming VoIP pushes are reported to CallKit before network requests;
+the app then acknowledges ringing and fetches current call state. It uses the
+existing accept, join, decline and end endpoints. Group-call semantics are shared
+with Android. See [ios.md](ios.md) for provisioning and background limits.
+
 ### Push (FCM)
 
 Sent through the `PushProvider` interface:

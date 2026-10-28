@@ -14,6 +14,7 @@ import { LiveKitServer, type LiveKitService } from "./livekit.js";
 import type { PushConfig } from "./protocol.js";
 import { PushDispatcher } from "./push/dispatcher.js";
 import { FcmProvider } from "./push/fcm.js";
+import { ApnsProvider } from "./push/apns.js";
 import type { PushProvider } from "./push/push-provider.js";
 import { Calls, callRoutes, targetsOf } from "./routes/calls.js";
 import { messageRoutes } from "./routes/messages.js";
@@ -25,6 +26,7 @@ export interface BuildOptions {
   logger?: FastifyServerOptions["logger"];
   /** Inject a push provider (tests). Defaults to FCM when configured. */
   pushProvider?: PushProvider;
+  applePushProvider?: PushProvider;
   /** Inject LiveKit (tests). Defaults to the configured server, if any. */
   livekit?: LiveKitService;
 }
@@ -77,8 +79,9 @@ export async function buildApp(cfg: Config, opts: BuildOptions = {}): Promise<Bu
 
   const provider: PushProvider | undefined =
     opts.pushProvider ?? (cfg.fcm ? new FcmProvider(cfg.fcm.serviceAccountFile, cfg.fcm.apiBase) : undefined);
+  const appleProvider = opts.applePushProvider ?? (cfg.apns ? new ApnsProvider(cfg.apns) : undefined);
   const pushConfig: PushConfig = cfg.fcm ? { provider: "fcm", fcm: cfg.fcm.client } : null;
-  if (!provider) app.log.warn("Push is not configured: the phone will only get events while the app is open");
+  if (!provider && !appleProvider) app.log.warn("Push is not configured: the phone will only get events while the app is open");
 
   const events = new EventLog(db);
   const ctx: Ctx = {
@@ -88,7 +91,7 @@ export async function buildApp(cfg: Config, opts: BuildOptions = {}): Promise<Bu
     events,
     relayId,
     pushConfig,
-    pushProviderName: provider?.name ?? "none",
+    pushProviderName: [provider?.name, appleProvider?.name].filter(Boolean).join("+") || "none",
     hub: new WsHub(events),
     livekit: opts.livekit ?? (cfg.livekit ? new LiveKitServer(cfg.livekit) : undefined),
   };
@@ -100,7 +103,7 @@ export async function buildApp(cfg: Config, opts: BuildOptions = {}): Promise<Bu
   const dispatcher = new PushDispatcher(db, provider, relayId, app.log, (id) => {
     const c = calls.get(id);
     return c && { direction: c.direction, device_ids: targetsOf(c) };
-  });
+  }, appleProvider);
   events.onEvent((e) => dispatcher.handle(e));
 
   app.setErrorHandler((err, req, reply) => {

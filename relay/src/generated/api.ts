@@ -94,6 +94,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/device/apns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Update or clear the calling iOS device's Apple push tokens.
+         * @description Only iOS devices may use this endpoint. Omitted token fields are unchanged;
+         *     null clears a token. Environment must match the app's signing entitlement.
+         *     VoIP tokens receive only incoming call invitations. Alert tokens receive
+         *     messages and non-VoIP call state updates. Credentials stay on the relay.
+         */
+        post: operations["updateApnsTokens"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/devices": {
         parameters: {
             query?: never;
@@ -506,7 +529,7 @@ export interface components {
             fcm_token?: string;
             device_name: string;
             /** @enum {string} */
-            platform: "android";
+            platform: "android" | "ios";
             app_version?: string;
         };
         PairResponse: {
@@ -540,12 +563,18 @@ export interface components {
             device_id: components["schemas"]["DeviceId"];
             name: string;
             /** @enum {string} */
-            platform: "android";
+            platform: "android" | "ios";
             app_version?: string;
             created_at: components["schemas"]["Timestamp"];
             last_seen_at?: components["schemas"]["Timestamp"];
             revoked_at?: components["schemas"]["Timestamp"];
             has_push_token: boolean;
+        };
+        ApnsRegistration: {
+            /** @enum {string} */
+            environment: "sandbox" | "production";
+            apns_token?: string | null;
+            voip_token?: string | null;
         };
         CreateCallRequest: {
             /** @description Required when the agent calls; optional when the user calls. */
@@ -799,7 +828,9 @@ export interface components {
             type: "ws.hello";
         };
         /**
-         * @description The FCM `data` map (all values are strings). `event` is the compact JSON
+         * @description The FCM `data` map or APNs custom fields (all values are strings).
+         *     APNs adds an `aps` dictionary; only call.invite uses the VoIP push type.
+         *     `event` is the compact JSON
          *     of an `Event`; `sig` = base64url(HMAC-SHA256(push_secret, event)).
          */
         PushData: {
@@ -994,6 +1025,30 @@ export interface operations {
         };
         responses: {
             /** @description Updated. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    updateApnsTokens: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApnsRegistration"];
+            };
+        };
+        responses: {
+            /** @description Tokens updated. */
             204: {
                 headers: {
                     [name: string]: unknown;

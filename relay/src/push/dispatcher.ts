@@ -76,24 +76,29 @@ export class PushDispatcher {
     private readonly relayId: string,
     private readonly log: FastifyBaseLogger,
     private readonly getCall: CallLookup = () => undefined,
+    private readonly appleProvider?: PushProvider,
   ) {}
 
   handle(event: Event): void {
-    if (!this.provider) return;
+    if (!this.provider && !this.appleProvider) return;
     const rule = ruleFor(event, this.getCall);
     if (!rule) return;
     const devices = this.db
-      .prepare("SELECT device_id, push_secret, fcm_token FROM devices WHERE revoked_at IS NULL AND fcm_token IS NOT NULL")
-      .all() as Array<{ device_id: string; push_secret: string; fcm_token: string }>;
+      .prepare("SELECT device_id, platform, push_secret, fcm_token, apns_token, voip_token, apns_environment FROM devices WHERE revoked_at IS NULL")
+      .all() as Array<{ device_id: string; platform: string; push_secret: string; fcm_token: string | null; apns_token: string | null; voip_token: string | null; apns_environment: "sandbox" | "production" }>;
     // A targeted call's pushes only go to the phones it targets.
     const targets = event.type.startsWith("call.") ? this.getCall((event as { call_id: string }).call_id)?.device_ids : undefined;
     for (const d of devices) {
       if (targets && !targets.includes(d.device_id)) continue;
       // The phone that joined already knows.
       if (event.type === "call.accept" && event.device_id === d.device_id) continue;
+      const provider = d.platform === "ios" ? this.appleProvider : this.provider;
+      const column = d.platform === "ios" ? (event.type === "call.invite" ? "voip_token" : "apns_token") : "fcm_token";
+      const token = d[column];
+      if (!provider || !token) continue;
       const payload = buildPayload(this.relayId, d.push_secret, event);
-      void this.provider
-        .send({ deviceId: d.device_id, token: d.fcm_token }, payload, rule)
+      void provider
+        .send({ deviceId: d.device_id, token, environment: d.apns_environment }, payload, rule)
         .then((res) => {
           if (res.ok) {
             this.log.debug({ device: d.device_id, event: event.type }, "push sent");
@@ -102,8 +107,8 @@ export class PushDispatcher {
           this.log.warn({ device: d.device_id, event: event.type, error: res.error }, "push failed");
           if (res.unregistered) {
             this.db
-              .prepare("UPDATE devices SET fcm_token = NULL WHERE device_id = ? AND fcm_token = ?")
-              .run(d.device_id, d.fcm_token);
+              .prepare(`UPDATE devices SET ${column} = NULL WHERE device_id = ? AND ${column} = ?`)
+              .run(d.device_id, token);
           }
         })
         .catch((e: unknown) => this.log.error({ err: e, device: d.device_id }, "push error"));

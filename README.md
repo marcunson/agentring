@@ -1,5 +1,10 @@
 # agentring
 
+> **iPhone support in this fork:** native SwiftUI app (iOS 17+), CallKit,
+> PushKit/APNs and LiveKit audio. Build/signing instructions and physical-device
+> checks: [docs/ios.md](docs/ios.md). Android remains supported. Apple signing and
+> a real iPhone are required to validate incoming calls while locked.
+
 **Your AI agent can call you.** When it needs a decision, hits a wall or finishes a
 long job, your phone rings like a real call, even locked and in Doze. A voice AI tells
 you what's going on, you talk it through, and the agent gets the transcript and carries
@@ -21,7 +26,7 @@ version: [demo.gif](docs/media/demo.gif).*
 
 > **Pre-release.** Messages, calls on a locked phone, the voice AI, calling your agent
 > from the app and the MCP server all work. So far it has been tested on one phone
-> (Pixel 6, Android 16). Android only for now.
+> (Pixel 6, Android 16). This fork also includes an iPhone client; see [iOS setup](docs/ios.md).
 
 ## What it does
 
@@ -123,7 +128,7 @@ agents you'd trust someone holding your phone with. Details and the threat model
 
 ## Limitations
 
-- Android only (no iOS yet).
+- Android and an iOS client in this fork; see [iPhone setup](docs/ios.md).
 - One user per relay: no accounts.
 - The voice AI uses Gemini Live; other realtime backends plug in through
   [`RealtimeBackend`](docs/voice.md).
