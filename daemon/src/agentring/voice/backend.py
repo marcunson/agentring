@@ -1,4 +1,4 @@
-"""The plug point for realtime speech-to-speech models (Gemini Live today; OpenAI Realtime next).
+"""The plug point for realtime speech-to-speech providers.
 
 A backend turns a model's wire protocol into a few plain events. The call session
 (session.py) never sees a provider's JSON, so adding a provider means one class.
@@ -39,6 +39,15 @@ class TurnComplete:
 
 
 @dataclass
+class TranscriptCorrection:
+    """Replace a completed transcript after the provider accounts for an interruption."""
+
+    role: Literal["user", "agent"]
+    original: str
+    corrected: str
+
+
+@dataclass
 class ToolCalls:
     calls: list[ToolCall]
 
@@ -50,7 +59,7 @@ class SessionEnding:
     detail: Any = None
 
 
-Event = AudioOut | Interrupted | Transcript | TurnComplete | ToolCalls | SessionEnding
+Event = AudioOut | Interrupted | Transcript | TranscriptCorrection | TurnComplete | ToolCalls | SessionEnding
 
 
 @dataclass

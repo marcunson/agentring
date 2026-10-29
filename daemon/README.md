@@ -9,7 +9,7 @@ uv tool install 'agentring[voice]'   # or, from a checkout: uv tool install './d
 agentring init --relay https://relay.example.com --api-key ak_...
 agentring pair                       # scan the QR with the Android app
 agentring msg "hola"
-agentring call "Testing agentring" --ai   # needs GEMINI_API_KEY in ~/.agentring/.env
+agentring call "Testing agentring" --ai   # Gemini by default; see docs/elevenlabs.md for --provider elevenlabs
 claude mcp add agentring -- agentring mcp
 ```
 

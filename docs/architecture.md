@@ -197,6 +197,13 @@ CI fails if generated code is stale or a fixture doesn't round-trip.
 
 ## Accepted deviations
 
+- **ElevenLabs Agents voice backend** (iPhone adaptation, at the user's request):
+  the daemon can select Gemini Live or ElevenLabs through `RealtimeBackend`.
+  ElevenLabs handles the speech conversation and delegates local work through
+  the existing client-tool / `consult_agent` bridge, including OpenClaw. No relay
+  or phone protocol changes and no additional runtime dependencies. Hosted agent
+  provisioning is a separate setup step; see [elevenlabs.md](elevenlabs.md).
+
 - **M3 voice without `livekit-agents`** (merged in #2, at the user's
   request): the voice worker uses the plain `livekit` SDK (already used by the M2 echo
   worker) and talks to the model's realtime WebSocket API directly through a small

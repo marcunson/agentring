@@ -16,7 +16,7 @@ import segno
 import typer
 
 from . import __version__
-from .config import ConfigError, Settings, home_dir, load_settings, secret, write_settings
+from .config import ConfigError, Settings, home_dir, load_settings, write_settings
 from .relay_client import RelayClient, RelayError
 from .store import Store
 from .sync import FatalSyncError, catch_up, run_ws
@@ -33,13 +33,14 @@ agents_app = typer.Typer(help="Your agents the voice AI can consult (agents.yaml
 app.add_typer(agents_app, name="agents")
 
 JsonOpt = Annotated[bool, typer.Option("--json", help="Machine-readable JSON output.")]
-AiOpt = Annotated[bool, typer.Option("--ai", help="A voice AI (Gemini Live, needs GEMINI_API_KEY) talks on the call.")]
+AiOpt = Annotated[bool, typer.Option("--ai", help="A voice AI talks on the call (Gemini or ElevenLabs).")]
+ProviderOpt = Annotated[Optional[str], typer.Option("--provider", help="--ai: gemini or elevenlabs; defaults to AGENTRING_VOICE_PROVIDER or gemini.")]
 InstructionsOpt = Annotated[
     Optional[str], typer.Option("--instructions", help="--ai: system prompt, or @file to read it from a file.")
 ]
 McpOpt = Annotated[Optional[list[str]], typer.Option("--mcp", help="--ai: MCP server URL whose tools the AI may use (repeatable).")]
 ToolsOpt = Annotated[Optional[str], typer.Option("--tools", help="--ai: comma-separated allowlist of MCP tools.")]
-ModelOpt = Annotated[Optional[str], typer.Option("--model", help="--ai: Gemini Live model (default gemini-3.8-live).")]
+ModelOpt = Annotated[Optional[str], typer.Option("--model", help="--ai: provider's LLM model; ElevenLabs otherwise uses its hosted agent settings.")]
 AgentsFileOpt = Annotated[
     Optional[str],
     typer.Option("--agents", help="--ai: agents.yaml with your agents and MCP servers (default ~/.agentring/agents.yaml "
@@ -64,18 +65,21 @@ def _agents_config(path: str | None, *, required: bool = False) -> Any:
 
 
 async def _build_ai(instructions: str | None, mcp: list[str] | None, tools: str | None, model: str | None,
-                    voice: str | None, agents_file: str | None = None) -> Any:
+                    voice: str | None, agents_file: str | None = None, provider: str | None = None) -> Any:
     try:
         from .voice.quick import build_agent
     except ImportError:
         raise _fail("voice support is not installed: install agentring with the [voice] extra") from None
-    key = secret("GEMINI_API_KEY")
-    if not key:
-        raise _fail("--ai needs GEMINI_API_KEY (environment or ~/.agentring/.env)")
+    from .voice.options import voice_options
+
+    try:
+        options = voice_options(provider)
+    except ValueError as e:
+        raise _fail(str(e)) from None
     allow = [t.strip() for t in tools.split(",") if t.strip()] if tools else None
     agents = _agents_config(agents_file)
     try:
-        return await build_agent(key, instructions=instructions, mcp=mcp, allow=allow, agents=agents, model=model,
+        return await build_agent(**options, instructions=instructions, mcp=mcp, allow=allow, agents=agents, model=model,
                                  voice=voice)
     except OSError as e:
         raise _fail(f"cannot read the instructions: {e}") from None
@@ -236,6 +240,45 @@ def pair(
 _TERMINAL = {"ended", "missed", "declined", "canceled"}
 
 
+@app.command("elevenlabs-config")
+def elevenlabs_config(
+    instructions: InstructionsOpt = None,
+    mcp: McpOpt = None,
+    tools: ToolsOpt = None,
+    agents_file: AgentsFileOpt = None,
+    name: str = "agentring",
+    language: str = "es",
+    voice: Optional[str] = None,
+    model: Optional[str] = None,
+) -> None:
+    """Export a dedicated ElevenLabs agent's setup JSON; no ElevenLabs key needed."""
+    try:
+        from .voice.elevenlabs import agent_config
+        from .voice.quick import build_agent
+        from .voice.session import END_CALL
+        from .voice.tools import Tool
+    except ImportError:
+        raise _fail("voice support is not installed: install agentring with the [voice] extra") from None
+
+    agents = _agents_config(agents_file)
+    allow = [t.strip() for t in tools.split(",") if t.strip()] if tools else None
+
+    async def export() -> dict:
+        built = await build_agent("unused", provider="elevenlabs", agent_id="setup",
+                                  instructions=instructions, mcp=mcp, allow=allow, agents=agents)
+        try:
+            specs = list(built.agent.tools)
+            specs.append(Tool(END_CALL, built.agent.prompts.end_call, lambda: None))
+            return agent_config(built.agent.instructions, specs, name=name, language=language, voice=voice, model=model)
+        finally:
+            await built.aclose()
+
+    try:
+        typer.echo(json.dumps(asyncio.run(export()), ensure_ascii=False, indent=2))
+    except OSError as e:
+        raise _fail(f"cannot read the instructions: {e}") from None
+
+
 @app.command()
 def call(
     reason: Annotated[str, typer.Argument(help="Why you're calling; shown on the phone (max 500 chars).")],
@@ -248,6 +291,7 @@ def call(
         Optional[str], typer.Option("--voice", help="With --ai the model's voice (e.g. Charon); otherwise the macOS `say` voice.")
     ] = None,
     ai: AiOpt = False,
+    provider: ProviderOpt = None,
     instructions: InstructionsOpt = None,
     mcp: McpOpt = None,
     tools: ToolsOpt = None,
@@ -260,7 +304,7 @@ def call(
     """Call the phone. Rings until answered (30 s). With --ai a voice AI talks to you; otherwise the agent greets and echoes you (audio test)."""
     if ai:
         return _ai_call(reason, urgent, agent_name, instructions, mcp, tools, model, voice, agents_file, fallback,
-                        json_out)
+                        json_out, provider)
     try:
         from .voice.echo import EchoWorker, synthesize
     except ImportError:
@@ -495,14 +539,14 @@ def devices_list(
 
 def _ai_call(reason: str, urgent: bool, agent_name: str | None, instructions: str | None, mcp: list[str] | None,
              tools: str | None, model: str | None, voice: str | None, agents_file: str | None, fallback: bool,
-             json_out: bool) -> None:
+             json_out: bool, provider: str | None = None) -> None:
     from .voice import CallInfo
 
     s = _settings()
     client = _client(s)
 
     async def run() -> Any:
-        built = await _build_ai(instructions, mcp, tools, model, voice, agents_file)
+        built = await _build_ai(instructions, mcp, tools, model, voice, agents_file, provider)
         agent = built.agent
         try:
             created = await asyncio.to_thread(
@@ -627,7 +671,8 @@ def _describe(event: dict[str, Any]) -> str | None:
 
 @app.command()
 def serve(
-    ai: Annotated[bool, typer.Option("--ai", help="Answer calls from the phone with a voice AI (needs GEMINI_API_KEY).")] = False,
+    ai: Annotated[bool, typer.Option("--ai", help="Answer calls from the phone with a voice AI.")] = False,
+    provider: ProviderOpt = None,
     instructions: InstructionsOpt = None,
     mcp: McpOpt = None,
     tools: ToolsOpt = None,
@@ -676,7 +721,7 @@ def serve(
         _signals(stop)
         built: Any = None
         if ai:
-            built = await _build_ai(instructions, mcp, tools, model, voice, agents_file)
+            built = await _build_ai(instructions, mcp, tools, model, voice, agents_file, provider)
             voice_agent = built.agent
             log.info("answering calls with %d tools", len(voice_agent.tools))
         log.info("agentring %s serving; relay %s", __version__, s.relay_url)

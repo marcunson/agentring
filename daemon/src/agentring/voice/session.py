@@ -26,7 +26,7 @@ import numpy as np
 from livekit import rtc
 
 from .backend import (AudioOut, Interrupted, RealtimeBackend, SessionEnding, ToolCalls, ToolResult, TurnComplete,
-                      Transcript)
+                      Transcript, TranscriptCorrection)
 from .tools import Tool, ToolCall, _session, result_text
 
 log = logging.getLogger("agentring.voice")
@@ -293,8 +293,14 @@ class CallSession:
     # ------------------------------------------------------------ model
 
     async def _model_loop(self) -> None:
-        async for ev in self.backend.events():
-            self.handle_event(ev)
+        try:
+            async for ev in self.backend.events():
+                self.handle_event(ev)
+        except Exception as e:
+            self.error = repr(e)
+            log.exception("voice provider failed")
+            self.finish("error")
+            return
         self.finish("model_closed")
 
     def handle_event(self, ev: Any) -> None:
@@ -311,6 +317,11 @@ class CallSession:
             self.partial[ev.role] += ev.text
             if ev.role == "user" and ev.text.strip():
                 self.last_user_speech_at = time.time()
+        elif isinstance(ev, TranscriptCorrection):
+            for i in range(len(self.transcript) - 1, -1, -1):
+                if self.transcript[i] == (ev.role, ev.original.strip()):
+                    self.transcript[i] = (ev.role, ev.corrected.strip())
+                    break
         elif isinstance(ev, TurnComplete):
             for role in ("user", "agent"):
                 text = self.partial[role].strip()

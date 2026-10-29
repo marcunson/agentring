@@ -1,5 +1,8 @@
 # Voice AI on calls (M3)
 
+For ElevenLabs Agents instead of Gemini, see [ElevenLabs setup](elevenlabs.md).
+Both providers use the same phone app and local tool/agent bridge.
+
 When a call is answered, a realtime speech-to-speech model talks to the user, can
 use your tools while the call goes on, and hangs up by itself when the user says
 goodbye. It works both ways: the agent calling the phone, and the phone calling

@@ -51,7 +51,8 @@ def test_mcp_server_messages(relay: str, agentring_home):
     tok = json.loads(CliRunner().invoke(app, ["pair", "--no-wait", "--json"]).output)
     phone = simulate_phone_pairing(tok["qr_payload"])
 
-    env = {**os.environ, "AGENTRING_HOME": str(agentring_home), "GEMINI_API_KEY": ""}
+    env = {**os.environ, "AGENTRING_HOME": str(agentring_home), "GEMINI_API_KEY": "",
+           "AGENTRING_VOICE_PROVIDER": "gemini"}
     c = Client(env)
     try:
         init = c.request("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
@@ -90,3 +91,20 @@ def test_mcp_server_messages(relay: str, agentring_home):
         assert c.request("nope/method")["error"]["code"] == -32601
     finally:
         c.close()
+
+
+def test_mcp_selects_elevenlabs(relay, agentring_home):
+    result = CliRunner().invoke(app, ["init", "--relay", relay, "--api-key", API_KEY])
+    assert result.exit_code == 0, result.output
+    env = {**os.environ, "AGENTRING_HOME": str(agentring_home), "AGENTRING_VOICE_PROVIDER": "elevenlabs",
+           "ELEVENLABS_API_KEY": "test-key", "ELEVENLABS_AGENT_ID": ""}
+    client = Client(env)
+    try:
+        client.request("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
+                                       "clientInfo": {"name": "test", "version": "1"}})
+        result = client.tool("call", reason="test")
+        assert result["isError"]
+        assert ("ELEVENLABS_AGENT_ID" in result["content"][0]["text"]
+                or "[voice]" in result["content"][0]["text"])
+    finally:
+        client.close()

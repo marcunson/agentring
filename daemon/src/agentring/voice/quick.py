@@ -62,9 +62,22 @@ async def build_agent(
     agents: AgentsConfig | None = None,
     model: str | None = None,
     voice: str | None = None,
+    provider: str = "gemini",
+    agent_id: str | None = None,
 ) -> BuiltAgent:
-    """Gemini Live with the tools of the given MCP servers (only `allow` if given) and of
+    """A voice provider with the tools of the given MCP servers (only `allow` if given) and of
     agents.yaml (its MCP servers, and `consult_agent` for its agents). Close it when done."""
+    if provider == "gemini":
+        factory = lambda: GeminiLive(api_key, model=model or DEFAULT_MODEL, voice=voice or DEFAULT_VOICE)
+    elif provider == "elevenlabs":
+        from .elevenlabs import ElevenLabs
+
+        if not agent_id:
+            raise ValueError("ElevenLabs needs an agent_id")
+        factory = lambda: ElevenLabs(api_key, agent_id, model=model, voice=voice)
+    else:
+        raise ValueError(f"Unknown voice provider: {provider}")
+    text = read_instructions(instructions)
     built = BuiltAgent(None, [])  # type: ignore[arg-type]
     tools: list[Tool] = []
     servers = [(url, allow, None) for url in mcp or []]
@@ -80,7 +93,5 @@ async def build_agent(
     if agents and agents.agents:
         built.consultations = Consultations(agents.agents)
         tools.append(built.consultations.tool())
-    text = read_instructions(instructions)
-    built.agent = VoiceAgent(lambda: GeminiLive(api_key, model=model or DEFAULT_MODEL, voice=voice or DEFAULT_VOICE),
-                             text, tools)
+    built.agent = VoiceAgent(factory, text, tools)
     return built
