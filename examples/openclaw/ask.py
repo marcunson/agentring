@@ -10,6 +10,19 @@ import tempfile
 import uuid
 
 
+def voice_overrides(call_id: str | None) -> list[str]:
+    """Per-run settings only for phone calls, never global or Telegram defaults."""
+    if not call_id:
+        return []
+    model = os.environ.get("AGENTRING_OPENCLAW_VOICE_MODEL", "").strip()
+    thinking = os.environ.get("AGENTRING_OPENCLAW_VOICE_THINKING", "").strip().lower()
+    if model and (model.startswith("-") or len(model) > 256 or any(c.isspace() or ord(c) < 32 for c in model)):
+        raise SystemExit("AGENTRING_OPENCLAW_VOICE_MODEL must be a single model id or alias.")
+    if thinking and thinking not in {"off", "minimal", "low", "medium", "high", "xhigh", "adaptive", "max", "ultra"}:
+        raise SystemExit("AGENTRING_OPENCLAW_VOICE_THINKING is not a supported thinking level.")
+    return (["--model", model] if model else []) + (["--thinking", thinking] if thinking else [])
+
+
 def main() -> None:
     executable = os.environ.get("AGENTRING_OPENCLAW_BIN") or shutil.which("openclaw")
     if not executable:
@@ -18,8 +31,9 @@ def main() -> None:
     if not task.strip():
         raise SystemExit("The task on stdin is empty.")
     agent = os.environ.get("AGENTRING_OPENCLAW_AGENT", "main")
-    call = os.environ.get("AGENTRING_CALL_ID") or str(uuid.uuid4())
-    session = f"agent:{agent}:agentring-{call}"
+    call = os.environ.get("AGENTRING_CALL_ID")
+    overrides = voice_overrides(call)
+    session = f"agent:{agent}:agentring-{call or uuid.uuid4()}"
     try:
         # Older OpenClaw versions accept a path but not '-' for stdin. Keep task
         # text out of process arguments with a private, automatically removed file.
@@ -28,7 +42,7 @@ def main() -> None:
             prompt.flush()
             result = subprocess.run(
                 [executable, "agent", "--agent", agent, "--session-key", session,
-                 "--message-file", prompt.name, "--timeout", "90", "--json"],
+                 "--message-file", prompt.name, "--timeout", "90", "--json", *overrides],
                 text=True, encoding="utf-8", capture_output=True, timeout=120,
             )
     except subprocess.TimeoutExpired:

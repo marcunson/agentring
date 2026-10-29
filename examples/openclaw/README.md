@@ -46,6 +46,38 @@ between questions in that call. It never passes `--deliver`, changes approval
 settings or retries a task automatically after an uncertain result. OpenClaw
 keeps its existing model credentials and tool permissions.
 
+### Optional: a faster model for phone calls only
+
+Add these optional settings to the OpenClaw command agent's `env` above, then
+restart the answering daemon when no call is running:
+
+```yaml
+      AGENTRING_OPENCLAW_VOICE_MODEL: openai/gpt-5.6-luna
+      AGENTRING_OPENCLAW_VOICE_THINKING: low
+```
+
+Choose a model already available to your account. `low` is the lowest supported
+level on the tested ChatGPT-account route; other routes/models may also support
+`off`. Verify your route's accepted levels rather than assuming API model
+capabilities apply to every account connection. Unsupported settings fail; the
+adapter never retries an action using another model.
+
+These become `openclaw agent --model ... --thinking ...` on each phone request,
+only when `AGENTRING_CALL_ID` is present. They apply both to a hosted ElevenLabs
+Agent consulting OpenClaw and to the direct OpenClaw speech provider. The bridge
+does not write OpenClaw's agent/global model configuration, Telegram bindings or
+Telegram sessions. Ordinary `agentring agents ask` without a call id also keeps
+the inherited model. Omit either setting to inherit that setting as before.
+
+A smaller model and lower thinking can trade answer quality for latency; they
+do not make tool execution instantaneous. The local hold music remains active
+while a phone task works. No phone update or hosted-agent update is needed.
+
+References: [OpenClaw per-run flags](https://docs.openclaw.ai/cli/agent),
+[GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna).
+
+### Verify the bridge
+
 Keep the OpenClaw gateway running. Change `main` in the configuration to use
 another of your agents. The adapter requires an OpenClaw CLI with `--message-file`
 and `--session-key` support.

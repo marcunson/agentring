@@ -25,6 +25,11 @@ Keep a working [OpenClaw command bridge](agents.md#openclaw) in `agents.yaml`,
 normally named `openclaw`, using the supplied `examples/openclaw/ask.py` adapter.
 OpenClaw keeps its existing model, tools, credentials and permissions.
 
+To choose a lighter model or less thinking only for phone requests, use the
+adapter's [voice-specific overrides](../examples/openclaw/README.md#optional-a-faster-model-for-phone-calls-only).
+The same overrides cover both direct calls and delegated OpenClaw consultations;
+Telegram continues to use its existing model configuration.
+
 The ElevenLabs API key needs **Speech to Text** and **Text to Speech** access.
 Access to ElevenLabs Agents alone is insufficient. Store secrets in
 `$AGENTRING_HOME/.env` (mode 600), without changing the existing provider default:

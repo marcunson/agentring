@@ -177,6 +177,13 @@ fixed text: the task arrives as `$1` and is never parsed by the shell. The call 
 gives each call its own OpenClaw session, so a second question on the same call
 keeps the context of the first.
 
+The supplied [Python adapter](../examples/openclaw/README.md) instead reads tasks
+from stdin through a private temporary file. Its optional
+`AGENTRING_OPENCLAW_VOICE_MODEL` and `AGENTRING_OPENCLAW_VOICE_THINKING` settings
+select the model and thinking per phone request, in either voice mode. They do
+not change OpenClaw's default or Telegram sessions, and are ignored without a
+call id. Configure an account-supported model/level and restart the daemon.
+
 ### Agents behind an HTTP API
 
 For an agent that only runs as a server (an OpenAI-compatible endpoint such as the
