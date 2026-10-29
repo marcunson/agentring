@@ -64,9 +64,25 @@ async def build_agent(
     voice: str | None = None,
     provider: str = "gemini",
     agent_id: str | None = None,
+    voice_id: str | None = None,
+    direct_agent: str = "openclaw",
 ) -> BuiltAgent:
     """A voice provider with the tools of the given MCP servers (only `allow` if given) and of
     agents.yaml (its MCP servers, and `consult_agent` for its agents). Close it when done."""
+    if provider == "openclaw-elevenlabs":
+        from .direct import OpenClawDirect
+
+        selected = next((a for a in (agents.agents if agents else []) if a.name == direct_agent), None)
+        if selected is None:
+            raise ValueError(f"Direct mode needs the {direct_agent!r} command agent in agents.yaml")
+        if not (voice or voice_id):
+            raise ValueError("Direct mode needs ELEVENLABS_VOICE_ID or --voice; see docs/openclaw-direct.md")
+        if model:
+            raise ValueError("Direct mode uses OpenClaw's model settings; omit --model")
+        if mcp or (agents and agents.mcp):
+            raise ValueError("Direct mode uses OpenClaw's own tools; configure MCP servers in OpenClaw")
+        factory = lambda: OpenClawDirect(api_key, voice or voice_id, selected)
+        return BuiltAgent(VoiceAgent(factory, read_instructions(instructions), end_call_tool=False), [])
     if provider == "gemini":
         factory = lambda: GeminiLive(api_key, model=model or DEFAULT_MODEL, voice=voice or DEFAULT_VOICE)
     elif provider == "elevenlabs":

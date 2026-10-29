@@ -197,6 +197,14 @@ CI fails if generated code is stale or a fixture doesn't round-trip.
 
 ## Accepted deviations
 
+- **Direct OpenClaw speech provider** (additional mode requested by the user):
+  `openclaw-elevenlabs` uses ElevenLabs realtime STT and streamed TTS with the
+  existing local OpenClaw command bridge as the conversational agent. The hosted
+  ElevenLabs Agents mode remains available. Mode selection is on the daemon / CLI
+  for the first version, without exposing the gateway or changing the phone / relay
+  protocol. A backend wait event reuses the session's local hold music. No new
+  dependencies; see [openclaw-direct.md](openclaw-direct.md).
+
 - **ElevenLabs Agents voice backend** (iPhone adaptation, at the user's request):
   the daemon can select Gemini Live or ElevenLabs through `RealtimeBackend`.
   ElevenLabs handles the speech conversation and delegates local work through

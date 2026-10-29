@@ -34,7 +34,7 @@ app.add_typer(agents_app, name="agents")
 
 JsonOpt = Annotated[bool, typer.Option("--json", help="Machine-readable JSON output.")]
 AiOpt = Annotated[bool, typer.Option("--ai", help="A voice AI talks on the call (Gemini or ElevenLabs).")]
-ProviderOpt = Annotated[Optional[str], typer.Option("--provider", help="--ai: gemini or elevenlabs; defaults to AGENTRING_VOICE_PROVIDER or gemini.")]
+ProviderOpt = Annotated[Optional[str], typer.Option("--provider", help="--ai: gemini, elevenlabs or openclaw-elevenlabs; defaults to AGENTRING_VOICE_PROVIDER or gemini.")]
 InstructionsOpt = Annotated[
     Optional[str], typer.Option("--instructions", help="--ai: system prompt, or @file to read it from a file.")
 ]
@@ -83,6 +83,8 @@ async def _build_ai(instructions: str | None, mcp: list[str] | None, tools: str 
                                  voice=voice)
     except OSError as e:
         raise _fail(f"cannot read the instructions: {e}") from None
+    except ValueError as e:
+        raise _fail(str(e)) from None
 
 
 def _print_result(r: Any) -> None:
@@ -288,7 +290,7 @@ def call(
         Optional[str], typer.Option("--greeting", help="What the agent says when the user answers (default: the reason).")
     ] = None,
     voice: Annotated[
-        Optional[str], typer.Option("--voice", help="With --ai the model's voice (e.g. Charon); otherwise the macOS `say` voice.")
+        Optional[str], typer.Option("--voice", help="With --ai: Gemini voice name or ElevenLabs voice ID; otherwise the macOS `say` voice.")
     ] = None,
     ai: AiOpt = False,
     provider: ProviderOpt = None,

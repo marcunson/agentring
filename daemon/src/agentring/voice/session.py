@@ -25,7 +25,7 @@ from typing import Any
 import numpy as np
 from livekit import rtc
 
-from .backend import (AudioOut, Interrupted, RealtimeBackend, SessionEnding, ToolCalls, ToolResult, TurnComplete,
+from .backend import (AgentWaiting, AudioOut, Interrupted, RealtimeBackend, SessionEnding, ToolCalls, ToolResult, TurnComplete,
                       Transcript, TranscriptCorrection)
 from .tools import Tool, ToolCall, _session, result_text
 from .hold_music import HoldMusic
@@ -179,6 +179,7 @@ class CallSession:
         self._hold_paused_until = 0.0
         self._hold_music: HoldMusic | None = None
         self._playing_hold = False
+        self._backend_hold_token = object()
 
         self.room.on("participant_connected", self._on_join)
         self.room.on("participant_disconnected", self._on_leave)
@@ -347,7 +348,12 @@ class CallSession:
         self.finish("model_closed")
 
     def handle_event(self, ev: Any) -> None:
-        if isinstance(ev, ToolCalls):
+        if isinstance(ev, AgentWaiting):
+            if ev.active:
+                self.start_hold(self._backend_hold_token)
+            else:
+                self.end_hold(self._backend_hold_token)
+        elif isinstance(ev, ToolCalls):
             # In its own task: the call keeps listening and talking while a tool works.
             self._tasks.append(asyncio.create_task(self._answer_tools(ev.calls)))
         elif isinstance(ev, AudioOut):

@@ -3,6 +3,9 @@
 For ElevenLabs Agents instead of Gemini, see [ElevenLabs setup](elevenlabs.md).
 Both providers use the same phone app and local tool/agent bridge.
 
+An optional [direct OpenClaw mode](openclaw-direct.md) uses ElevenLabs only for
+speech recognition and synthesis, with OpenClaw answering every turn.
+
 When a call consults an agent such as OpenClaw, a quiet, locally generated hold
 music loop fills the wait. Speech takes priority, and the caller can still talk
 or hang up. Music follows the actual background job, including jobs that exceed

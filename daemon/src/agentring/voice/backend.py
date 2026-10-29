@@ -59,7 +59,14 @@ class SessionEnding:
     detail: Any = None
 
 
-Event = AudioOut | Interrupted | Transcript | TranscriptCorrection | TurnComplete | ToolCalls | SessionEnding
+@dataclass
+class AgentWaiting:
+    """A direct agent turn is running; the session may play its local hold music."""
+
+    active: bool
+
+
+Event = AudioOut | Interrupted | Transcript | TranscriptCorrection | TurnComplete | ToolCalls | SessionEnding | AgentWaiting
 
 
 @dataclass

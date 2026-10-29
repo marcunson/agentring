@@ -5,6 +5,11 @@ turn taking, an LLM and speech synthesis. Its LLM can call agentring's local too
 including `consult_agent` for OpenClaw. OpenClaw answers delegated tasks; it does
 not replace the conversational LLM in this integration.
 
+For an additional mode where OpenClaw is the conversational agent and ElevenLabs
+only transcribes and speaks, see [direct OpenClaw voice](openclaw-direct.md).
+Select it explicitly with `--provider openclaw-elevenlabs`; the existing mode
+and its hosted agent remain available.
+
 The phone app, relay, LiveKit and push configuration stay the same. Only the daemon
 connects to ElevenLabs; API keys and signed URLs never go to the phone. Audio and
 conversation context are sent to ElevenLabs during an AI call.

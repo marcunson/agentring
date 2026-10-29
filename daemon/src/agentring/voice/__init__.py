@@ -17,6 +17,7 @@ _WHERE = {
     "RealtimeBackend": "backend", "ToolResult": "backend",
     "GeminiLive": "gemini",
     "ElevenLabs": "elevenlabs",
+    "OpenClawDirect": "direct",
     "accept_incoming": "inbound", "is_incoming_call": "inbound",
     "CallInfo": "session", "CallResult": "session", "CallSession": "session", "Prompts": "session",
     "VoiceAgent": "session",
