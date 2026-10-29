@@ -41,13 +41,11 @@ struct RootView: View {
 
 private struct BrandMark: View {
     var body: some View {
-        ZStack {
-            Circle().stroke(.mint.opacity(0.12), lineWidth: 1).frame(width: 164, height: 164)
-            Circle().stroke(.mint.opacity(0.25), lineWidth: 1).frame(width: 130, height: 130)
-            Circle().fill(.mint.opacity(0.12)).frame(width: 96, height: 96)
-            Image(systemName: "waveform").font(.system(size: 38, weight: .medium)).foregroundStyle(.mint)
-        }
-        .accessibilityHidden(true)
+        Image("BrandMark")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 172, height: 172)
+            .accessibilityHidden(true)
     }
 }
 
