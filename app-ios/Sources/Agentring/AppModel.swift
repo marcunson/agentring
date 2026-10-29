@@ -22,6 +22,12 @@ final class AppModel: ObservableObject {
     private var foreground = false
 
     init() {
+        #if DEBUG && targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--uitesting-reset-pairing") {
+            KeychainStore.clear()
+            try? FileManager.default.removeItem(at: Self.cacheURL)
+        }
+        #endif
         credentials = KeychainStore.load()
         if credentials != nil, let data = try? Data(contentsOf: Self.cacheURL) {
             messages = (try? RelayJSON.decoder().decode([Message].self, from: data)) ?? []

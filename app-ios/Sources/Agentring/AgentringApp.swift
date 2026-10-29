@@ -28,7 +28,7 @@ struct RootView: View {
             else {
                 TabView(selection: $tab) {
                     HomeView(model: model, calls: model.calls).tabItem { Label("Agent", systemImage: "waveform") }.tag(0)
-                    MessagesView(model: model).tabItem { Label("Messages", systemImage: "bubble.left.and.bubble.right") }.tag(1)
+                    MessagesView(model: model, onBack: { tab = 0 }).tabItem { Label("Messages", systemImage: "bubble.left.and.bubble.right") }.tag(1)
                     SettingsView(model: model).tabItem { Label("Settings", systemImage: "slider.horizontal.3") }.tag(2)
                 }
             }
@@ -165,9 +165,11 @@ struct HomeView: View {
 
 struct MessagesView: View {
     @ObservedObject var model: AppModel
+    let onBack: () -> Void
     @State private var text = ""
     @State private var sending = false
     @State private var clientId = UUID().uuidString
+    @FocusState private var composerFocused: Bool
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -193,11 +195,13 @@ struct MessagesView: View {
                                 }.id(message.id).task { await model.markRead(message) }
                             }
                         }.padding()
-                    }.onChange(of: model.messages.last?.id) { _, id in if let id { withAnimation { proxy.scrollTo(id, anchor: .bottom) } } }
+                    }.scrollDismissesKeyboard(.interactively)
+                        .onChange(of: model.messages.last?.id) { _, id in if let id { withAnimation { proxy.scrollTo(id, anchor: .bottom) } } }
                         .defaultScrollAnchor(.bottom)
                 }
                 HStack(alignment: .bottom) {
                     TextField("Message your agent", text: $text, axis: .vertical).lineLimit(1...5).padding(12)
+                        .focused($composerFocused)
                         .accessibilityIdentifier("message-input")
                         .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 18)).disabled(sending)
                     Button {
@@ -205,13 +209,33 @@ struct MessagesView: View {
                         sending = true
                         Task {
                             defer { sending = false }
-                            do { try await model.send(value, clientId: clientId); text = ""; clientId = UUID().uuidString }
+                            do {
+                                try await model.send(value, clientId: clientId)
+                                text = ""; clientId = UUID().uuidString; composerFocused = false
+                            }
                             catch { model.present(error) }
                         }
                     } label: { Image(systemName: "arrow.up.circle.fill").font(.system(size: 34)) }
                         .accessibilityLabel("Send message").disabled(sending || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 4000)
                 }.padding()
-            }.navigationTitle("Messages").refreshable { await model.refresh() }
+            }.navigationTitle("Messages").navigationBarTitleDisplayMode(.inline)
+                .refreshable { await model.refresh() }
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            composerFocused = false
+                            onBack()
+                        } label: { Label("Agent", systemImage: "chevron.left") }
+                            .accessibilityLabel("Back to Agent")
+                            .accessibilityIdentifier("messages-back")
+                    }
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { composerFocused = false }
+                            .accessibilityIdentifier("dismiss-message-keyboard")
+                    }
+                }
+                .onDisappear { composerFocused = false }
         }
     }
 }

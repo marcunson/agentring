@@ -27,7 +27,7 @@ final class PairingMessagesTests: XCTestCase {
         catch { throw XCTSkip("Start the UI-test relay on localhost:18080 (docs/ios.md).") }
         let token = try await request("/v1/pairing-tokens", method: "POST")
         let app = XCUIApplication()
-        // The test has its own simulator; the first run pairs, a rerun reuses its credentials.
+        app.launchArguments = ["--uitesting-reset-pairing"]
         addUIInterruptionMonitor(withDescription: "Permissions") { alert in
             for title in ["Allow", "Allow While Using App", "OK", "Permitir", "Aceptar"] {
                 if alert.buttons[title].exists { alert.buttons[title].tap(); return true }
@@ -56,12 +56,30 @@ final class PairingMessagesTests: XCTestCase {
         input.tap(); input.typeText("Received on iPhone")
         app.buttons["Send message"].tap()
         XCTAssertTrue(app.staticTexts["Received on iPhone"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["messages-back"].isHittable)
+        app.buttons["messages-back"].tap()
+        XCTAssertTrue(app.buttons["Call agent"].waitForExistence(timeout: 5))
+        if app.tabBars.buttons["Messages"].isHittable { app.tabBars.buttons["Messages"].tap() }
+        else { app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
+        let draft = app.descendants(matching: .any)["message-input"]
+        draft.tap(); draft.typeText("Unsent draft")
+        XCTAssertTrue(app.buttons["dismiss-message-keyboard"].waitForExistence(timeout: 5))
+        app.buttons["dismiss-message-keyboard"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+        app.descendants(matching: .any)["message-input"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
+        app.buttons["messages-back"].tap()
+        XCTAssertTrue(app.buttons["Call agent"].waitForExistence(timeout: 5))
+        if app.tabBars.buttons["Messages"].isHittable { app.tabBars.buttons["Messages"].tap() }
+        else { app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
+        XCTAssertEqual(app.descendants(matching: .any)["message-input"].value as? String, "Unsent draft")
         let page = try await request("/v1/messages?limit=500")
         let messages = page["messages"] as! [[String: Any]]
         XCTAssertTrue(messages.contains { $0["from"] as? String == "user" && $0["text"] as? String == "Received on iPhone" })
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Messages round trip"; attachment.lifetime = .keepAlways; add(attachment)
-        app.terminate(); app.launch()
+        app.terminate(); app.launchArguments = []; app.launch()
         XCTAssertTrue(app.tabBars.buttons["Messages"].waitForExistence(timeout: 10))
         if app.tabBars.buttons["Messages"].isHittable { app.tabBars.buttons["Messages"].tap() }
         else { app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
