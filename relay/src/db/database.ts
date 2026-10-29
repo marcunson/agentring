@@ -84,6 +84,11 @@ const MIGRATIONS: string[] = [
   ALTER TABLE devices ADD COLUMN voip_token TEXT;
   ALTER TABLE devices ADD COLUMN apns_environment TEXT NOT NULL DEFAULT 'production';
   `,
+  `
+  -- Optional per-call routing; existing clients keep the configured default.
+  ALTER TABLE calls ADD COLUMN voice_mode TEXT NOT NULL DEFAULT 'default'
+    CHECK (voice_mode IN ('default','elevenlabs','openclaw_direct'));
+  `,
 ];
 
 export type Db = DatabaseSync;

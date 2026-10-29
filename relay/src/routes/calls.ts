@@ -16,6 +16,7 @@ interface CallRow {
   reason: string;
   priority: "normal" | "urgent";
   agent_name: string;
+  voice_mode: Schemas["VoiceMode"];
   created_at: number;
   expires_at: number;
   answered_at: number | null;
@@ -47,6 +48,7 @@ export function callFromRow(r: CallRow): Call {
     ...(r.reason ? { reason: r.reason } : {}),
     priority: r.priority,
     agent_name: r.agent_name,
+    voice_mode: r.voice_mode,
     created_at: r.created_at,
     ...(r.answered_at ? { answered_at: r.answered_at } : {}),
     ...(r.ended_at ? { ended_at: r.ended_at } : {}),
@@ -169,6 +171,7 @@ export class Calls {
       reason: body.reason ?? "",
       priority: body.priority ?? "normal",
       agent_name: (p.kind === "agent" ? body.agent_name : undefined) ?? this.ctx.cfg.agentName,
+      voice_mode: body.voice_mode ?? "default",
       created_at: now,
       expires_at: now + this.ctx.cfg.ringTimeoutS * 1000,
       answered_at: null,
@@ -180,10 +183,10 @@ export class Calls {
     };
     this.ctx.db
       .prepare(
-        `INSERT INTO calls (call_id, direction, state, reason, priority, agent_name, created_at, expires_at, device_id, device_ids)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO calls (call_id, direction, state, reason, priority, agent_name, created_at, expires_at, device_id, device_ids, voice_mode)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(row.call_id, direction, "ringing", row.reason, row.priority, row.agent_name, now, row.expires_at, row.device_id, row.device_ids);
+      .run(row.call_id, direction, "ringing", row.reason, row.priority, row.agent_name, now, row.expires_at, row.device_id, row.device_ids, row.voice_mode);
     if (direction === "agent_to_user") {
       const devs =
         targets ??
@@ -199,6 +202,7 @@ export class Calls {
       call_id: row.call_id,
       direction,
       agent_name: row.agent_name,
+      voice_mode: row.voice_mode,
       reason: row.reason,
       priority: row.priority,
       expires_at: row.expires_at,
@@ -484,6 +488,7 @@ export function callRoutes(app: FastifyInstance, ctx: Ctx, calls: Calls): void {
             reason: { type: "string", maxLength: 500 },
             priority: { type: "string", enum: ["normal", "urgent"] },
             agent_name: { type: "string", minLength: 1, maxLength: 64 },
+            voice_mode: { type: "string", enum: ["default", "elevenlabs", "openclaw_direct"] },
             device_ids: {
               type: "array",
               minItems: 1,

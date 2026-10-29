@@ -196,6 +196,12 @@ paths:
         receives a `call.invite` event and gets its join info from
         `POST /v1/calls/{call_id}/accept`.
 
+        `voice_mode` selects the conversation handler for this call. Omitted or
+        `default` uses the daemon's configured provider; `elevenlabs` selects the
+        hosted ElevenLabs Agent, and `openclaw_direct` selects OpenClaw with
+        ElevenLabs speech only. An explicitly requested mode that is not configured
+        must be declined by the daemon, never answered using another mode.
+
         Targeted calls: the agent may pass `device_ids` to ring only those phones.
         The call is then private to them: the other phones get none of its events
         (WebSocket, push or `GET /v1/events`), do not see it in `GET /v1/calls`,
@@ -791,6 +797,10 @@ components:
         voip_token: { type: [string, "null"], pattern: "^[a-fA-F0-9]{32,512}$" }
 
     # ---------- calls ----------
+    VoiceMode:
+      type: string
+      enum: [default, elevenlabs, openclaw_direct]
+      description: Per-call conversation handler; omitted means the configured default.
     CreateCallRequest:
       type: object
       additionalProperties: false
@@ -806,6 +816,8 @@ components:
           description: Display name override for this call (agent only).
           type: string
           maxLength: 64
+        voice_mode:
+          $ref: "#/components/schemas/VoiceMode"
         device_ids:
           description: |
             Agent only: ring only these paired, non-revoked phones (a targeted
@@ -828,6 +840,7 @@ components:
         priority: { $ref: "#/components/schemas/Priority" }
         agent_name: { type: string }
         created_at: { $ref: "#/components/schemas/Timestamp" }
+        voice_mode: { $ref: "#/components/schemas/VoiceMode" }
         answered_at: { $ref: "#/components/schemas/Timestamp" }
         ended_at: { $ref: "#/components/schemas/Timestamp" }
         ended_by: { $ref: "#/components/schemas/Actor" }
@@ -936,6 +949,7 @@ components:
             call_id: { $ref: "#/components/schemas/CallId" }
             direction: { $ref: "#/components/schemas/CallDirection" }
             agent_name: { type: string }
+            voice_mode: { $ref: "#/components/schemas/VoiceMode" }
             reason: { type: string, description: "Empty string if the user called without a reason." }
             priority: { $ref: "#/components/schemas/Priority" }
             expires_at:

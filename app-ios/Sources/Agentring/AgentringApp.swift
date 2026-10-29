@@ -124,7 +124,7 @@ struct HomeView: View {
                     }.foregroundStyle(.secondary).padding(.top, 24)
                     BrandMark()
                     VStack(spacing: 9) {
-                        Text(model.status?.agentName ?? model.credentials?.agentName ?? "Your agent").font(.largeTitle.weight(.semibold))
+                        Text(calls.hasCall ? calls.displayName : model.status?.agentName ?? model.credentials?.agentName ?? "Your agent").font(.largeTitle.weight(.semibold))
                         Text(calls.hasCall ? calls.phase : "Pick up where you left off.").foregroundStyle(.secondary)
                     }
                     if calls.hasCall {
@@ -140,16 +140,25 @@ struct HomeView: View {
                             Label("End call", systemImage: "phone.down.fill").frame(maxWidth: .infinity).padding(.vertical, 10)
                         }.buttonStyle(.borderedProminent).tint(.red)
                     } else {
-                        Button { Task { await calls.start() } } label: {
-                            Label("Call agent", systemImage: "phone.fill").frame(maxWidth: .infinity).padding(.vertical, 12)
-                        }.buttonStyle(.borderedProminent).foregroundStyle(.black).disabled(model.status?.agentOnline != true)
+                        VStack(spacing: 12) {
+                            Button { Task { await calls.start(to: .agent) } } label: {
+                                Label("Call agent", systemImage: "phone.fill").frame(maxWidth: .infinity).padding(.vertical, 12)
+                            }.buttonStyle(.borderedProminent).foregroundStyle(.black)
+                                .accessibilityIdentifier("call-elevenlabs-agent")
+                                .accessibilityHint("Talk to the ElevenLabs agent, who can consult OpenClaw.")
+                            Button { Task { await calls.start(to: .mrVedsil) } } label: {
+                                Label("Call MrVedsil", systemImage: "waveform").frame(maxWidth: .infinity).padding(.vertical, 12)
+                            }.buttonStyle(.bordered).tint(.mint)
+                                .accessibilityIdentifier("call-mrvedsil")
+                                .accessibilityHint("Talk directly to OpenClaw.")
+                        }.disabled(model.status?.agentOnline != true || calls.starting)
                         if let call = model.status?.activeCall, call.direction == "agent_to_user", call.isOpen {
                             Button("Join current call") { Task { await calls.start(join: call.callId) } }.buttonStyle(.bordered)
                         }
                     }
                     VStack(alignment: .leading, spacing: 12) {
                         Label("A conversation that keeps work moving", systemImage: "sparkle").font(.subheadline.weight(.medium))
-                        Text("Ask a question or talk through the next step. Your voice assistant can consult your agents during the call.")
+                        Text("Call agent for your voice assistant, or call MrVedsil to speak directly to OpenClaw.")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
                         .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 20))

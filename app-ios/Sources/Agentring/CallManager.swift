@@ -7,6 +7,8 @@ import LiveKit
 final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderDelegate {
     @Published private(set) var phase = ""
     @Published private(set) var hasCall = false
+    @Published private(set) var starting = false
+    @Published private(set) var displayName = ""
     @Published private(set) var muted = false
     @Published private(set) var speaker = false
     private let provider: CXProvider
@@ -20,6 +22,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
     private var room: Room?
     private var poll: Task<Void, Never>?
     private var joinTarget: String?
+    private var destination: CallDestination = .agent
     private var pendingIncoming: Set<String> = []
     private let ringback = OutgoingRingback()
 
@@ -68,6 +71,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
                 }
                 self.callId = id; self.uuid = callUUID; self.incoming = true
                 self.hasCall = true; self.phase = "Incoming call"
+                self.displayName = event.agentName ?? "Agent"
                 self.model.startStream()
                 self.monitor(id: id, expiresAt: event.expiresAt)
                 if let api = self.model.api {
@@ -93,18 +97,20 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
         }
     }
 
-    func start(join: String? = nil) async {
-        guard !hasCall else { return }
+    func start(to destination: CallDestination = .agent, join: String? = nil) async {
+        guard !hasCall, !starting else { return }
         guard AVAudioApplication.shared.recordPermission == .granted else {
             model.error = "Enable microphone access in Settings before calling."; return
         }
+        starting = true
+        self.destination = destination
         joinTarget = join
         let id = UUID()
         do {
-            let action = CXStartCallAction(call: id, handle: callerHandle(fallback: model.credentials?.agentName ?? "Agent"))
+            let action = CXStartCallAction(call: id, handle: callerHandle(fallback: destination.name))
             action.contactIdentifier = model.callerIdentity?.contactIdentifier
             try await controller.request(CXTransaction(action: action))
-        } catch { model.present(error) }
+        } catch { starting = false; joinTarget = nil; model.present(error) }
     }
 
     func hangUp() async {
@@ -146,9 +152,12 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
     }
 
     func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
-        guard !hasCall, let api = model.api else { action.fail(); return }
+        guard !hasCall, let api = model.api else { starting = false; action.fail(); return }
         uuid = action.callUUID; hasCall = true; incoming = false; phase = "Calling…"
+        starting = false
         let target = joinTarget; joinTarget = nil
+        let selectedDestination = destination
+        displayName = target == nil ? selectedDestination.name : model.status?.activeCall?.agentName ?? "Agent"
         let playTones = target == nil && RingbackTone.ringCount() == 2
         do {
             try configureAudio()
@@ -180,8 +189,12 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
                     }
                 }
                 guard uuid == action.callUUID else { return }
-                let path = target.map { "/v1/calls/\($0)/join" } ?? "/v1/calls"
-                let result: CallWithJoin = try await api.value(path, method: "POST", body: target == nil ? [:] : nil)
+                let result: CallWithJoin
+                if let target {
+                    result = try await api.value("/v1/calls/\(target)/join", method: "POST")
+                } else {
+                    result = try await api.startCall(to: selectedDestination)
+                }
                 guard uuid == action.callUUID else { _ = try? await api.request("/v1/calls/\(result.call.callId)/end", method: "POST"); return }
                 callId = result.call.callId
                 try await connect(result.join, uuid: action.callUUID)
@@ -316,6 +329,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
         let oldRoom = room
         room = nil; uuid = nil; callId = nil; hasCall = false; joined = false
         incoming = false; muted = false; speaker = false; audioActive = false; phase = ""
+        starting = false; displayName = ""; destination = .agent; joinTarget = nil
         await oldRoom?.disconnect()
         model.callFinished()
     }

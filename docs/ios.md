@@ -98,7 +98,9 @@ from the app, run `agentring serve --ai` next to your agents.
    the native call screen, verify two-way audio, mute, speaker and hang-up.
 3. Repeat with the app in the background. Cancel a ringing call from the daemon
    and check CallKit closes it. Ignore one call and verify the missed-call fallback.
-4. Tap **Call agent** and verify the daemon accepts. Join an existing group call
+4. Tap **Call agent** and verify the hosted ElevenLabs agent answers. Hang up,
+   then tap **Call MrVedsil** and verify direct OpenClaw conversation and hold
+   music. Both calls use the same calling-tone preference. Join an existing group call
    from another paired phone and check that one phone hanging up does not end the
    other phone's conversation.
 5. Switch Wi-Fi/mobile networks, restart the app, rotate push tokens and revoke

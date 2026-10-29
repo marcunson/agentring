@@ -60,6 +60,7 @@ final class PairingMessagesTests: XCTestCase {
         XCTAssertTrue(app.buttons["messages-back"].isHittable)
         app.buttons["messages-back"].tap()
         XCTAssertTrue(app.buttons["Call agent"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["call-mrvedsil"].waitForExistence(timeout: 5))
         if app.tabBars.buttons["Messages"].isHittable { app.tabBars.buttons["Messages"].tap() }
         else { app.tabBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
         let draft = app.descendants(matching: .any)["message-input"]

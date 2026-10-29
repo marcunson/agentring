@@ -57,8 +57,18 @@ struct RelayCall: Decodable {
     let state: String
     let reason: String?
     let agentName: String
+    let voiceMode: String?
     let createdAt: Int64
     var isOpen: Bool { state == "ringing" || state == "active" }
+}
+
+enum CallDestination: String, CaseIterable {
+    case agent = "elevenlabs"
+    case mrVedsil = "openclaw_direct"
+
+    var name: String { self == .agent ? "Agent" : "MrVedsil" }
+    var buttonTitle: String { self == .agent ? "Call agent" : "Call MrVedsil" }
+    var requestBody: [String: Any] { ["voice_mode": rawValue] }
 }
 
 struct JoinInfo: Decodable {

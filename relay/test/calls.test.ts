@@ -26,6 +26,32 @@ function eventsOf(b: Awaited<ReturnType<typeof app>>) {
 }
 
 describe("calls", () => {
+  it.each(["default", "elevenlabs", "openclaw_direct"])("preserves phone voice mode %s through invite, status and acceptance", async (voiceMode) => {
+    const b = await app();
+    const dev = await pairDevice(b);
+    b.ctx.hub.isAgentOnline = () => true;
+    const created = await b.app.inject({ method: "POST", url: "/v1/calls", headers: dev.headers, payload: { voice_mode: voiceMode } });
+    expect(created.statusCode).toBe(201);
+    const call = created.json().call;
+    expect(call).toMatchObject({ direction: "user_to_agent", voice_mode: voiceMode });
+    expect(eventsOf(b).find((e) => e.type === "call.invite")).toMatchObject({ call_id: call.call_id, voice_mode: voiceMode });
+    expect((await b.app.inject({ url: `/v1/calls/${call.call_id}`, headers: AGENT })).json().voice_mode).toBe(voiceMode);
+    expect((await b.app.inject({ url: "/v1/status", headers: dev.headers })).json().active_call.voice_mode).toBe(voiceMode);
+    expect((await b.app.inject({ method: "POST", url: `/v1/calls/${call.call_id}/accept`, headers: AGENT })).json().call.voice_mode).toBe(voiceMode);
+  });
+
+  it("keeps legacy calls on the default and rejects an unknown voice mode", async () => {
+    const b = await app();
+    const dev = await pairDevice(b);
+    b.ctx.hub.isAgentOnline = () => true;
+    for (const voice_mode of ["other", "", null, 1]) {
+      expect((await b.app.inject({ method: "POST", url: "/v1/calls", headers: dev.headers, payload: { voice_mode } })).statusCode).toBe(400);
+    }
+    const legacy = await b.app.inject({ method: "POST", url: "/v1/calls", headers: dev.headers, payload: {} });
+    expect(legacy.statusCode).toBe(201);
+    expect(legacy.json().call.voice_mode).toBe("default");
+  });
+
   it("agent call: invite pushed with TTL until expiry, ringing, accept with join info, hang up", async () => {
     const b = await app();
     const dev = await pairDevice(b);

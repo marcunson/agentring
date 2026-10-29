@@ -681,6 +681,7 @@ def serve(
     model: ModelOpt = None,
     voice: Annotated[Optional[str], typer.Option("--voice", help="--ai: the model's voice (e.g. Charon).")] = None,
     agents_file: AgentsFileOpt = None,
+    direct_instructions: Annotated[Optional[str], typer.Option("--direct-instructions", help="Instructions for the phone's direct OpenClaw calls, or @file. Separate from the hosted agent prompt.")] = None,
 ) -> None:
     """Run the daemon: keeps a live connection to the relay. With --ai, answers the phone's calls with a voice AI."""
     s = _settings()
@@ -689,7 +690,7 @@ def serve(
     log = logging.getLogger("agentring")
 
     calls: set[asyncio.Task] = set()
-    voice_agent: Any = None
+    voice_modes: Any = None
 
     async def answer(e: dict[str, Any], stop: asyncio.Event) -> None:
         from .voice import accept_incoming
@@ -697,11 +698,23 @@ def serve(
         if calls - {asyncio.current_task()}:
             log.info("already on a call; not answering %s", e["call_id"])
             return
+        try:
+            voice_agent = await voice_modes.for_event(e)
+        except (ValueError, typer.Exit):
+            log.warning("requested voice mode %s is unavailable; declining %s", e.get("voice_mode"), e["call_id"])
+            try:
+                await asyncio.to_thread(client.decline_call, e["call_id"])
+                await asyncio.to_thread(client.post_message,
+                                        "The requested call mode is not configured on the Mac. Check its voice settings before calling again.",
+                                        reply_to=e["call_id"])
+            except RelayError:
+                log.warning("could not decline unavailable-mode call %s", e["call_id"])
+            return
         accepted = await asyncio.to_thread(accept_incoming, client, e)
         if not accepted:
             return
         info, join = accepted
-        log.info("answering %s", info.call_id)
+        log.info("answering %s with voice mode %s", info.call_id, e.get("voice_mode", "default"))
         r = await voice_agent.run(info, join, relay=client, stop=stop)
         log.info("call %s: %s, %d s, %d turns", info.call_id, r.end_reason, r.duration_s, len(r.transcript))
 
@@ -709,7 +722,7 @@ def serve(
         d = _describe(e)
         if d:
             log.info(d)
-        if voice_agent is not None and stop is not None and e.get("type") == "call.invite":
+        if voice_modes is not None and stop is not None and e.get("type") == "call.invite":
             from .voice import is_incoming_call
 
             if is_incoming_call(e):
@@ -718,21 +731,29 @@ def serve(
                 t.add_done_callback(calls.discard)
 
     async def main() -> None:
-        nonlocal voice_agent
+        nonlocal voice_modes
         stop = asyncio.Event()
         _signals(stop)
         built: Any = None
         if ai:
+            from .voice.inbound import InboundVoiceModes
+            from .voice.options import voice_options
+
             built = await _build_ai(instructions, mcp, tools, model, voice, agents_file, provider)
-            voice_agent = built.agent
-            log.info("answering calls with %d tools", len(voice_agent.tools))
+            async def build_mode(selected: str) -> Any:
+                if selected == "openclaw-elevenlabs":
+                    return await _build_ai(direct_instructions, None, None, None, None, agents_file, selected)
+                return await _build_ai(instructions, mcp, tools, model, voice, agents_file, selected)
+
+            voice_modes = InboundVoiceModes(built, voice_options(provider)["provider"], build_mode)
+            log.info("answering calls with %d tools; per-call voice modes enabled", len(built.agent.tools))
         log.info("agentring %s serving; relay %s", __version__, s.relay_url)
         try:
             await run_ws(client, s.api_key, store, lambda e: on_event(e, stop), stop=stop)
             await asyncio.gather(*calls, return_exceptions=True)
         finally:
-            if built is not None:
-                await built.aclose()
+            if voice_modes is not None:
+                await voice_modes.aclose()
 
     try:
         asyncio.run(main())

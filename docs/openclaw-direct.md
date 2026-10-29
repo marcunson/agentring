@@ -15,8 +15,9 @@ iPhone ← agentring / LiveKit ← ElevenLabs Text to Speech
 
 The existing `elevenlabs` provider remains available and unchanged: its hosted
 conversational agent decides when to delegate to OpenClaw with `consult_agent`.
-Explicit `--provider` selection affects that command only. No iPhone update,
-relay protocol change, public OpenClaw endpoint or additional package is needed.
+Explicit `--provider` selection affects that command only. No public OpenClaw
+endpoint or additional package is needed. An updated iPhone app can also select
+the mode for each call through the relay's optional `voice_mode` field.
 
 ## Setup
 
@@ -41,7 +42,34 @@ setting. A CLI `--voice` overrides it for a single command. The direct provider
 uses Scribe v2 Realtime with VAD and Flash v2.5 TTS at PCM16 mono / 16 kHz; library
 users can pass `tts_model` and `language` to `OpenClawDirect`.
 
-## Choose a mode
+## Choose a mode on the iPhone
+
+The home screen has two independent buttons:
+
+- **Call agent** sends `voice_mode: elevenlabs` and calls the hosted ElevenLabs
+  conversational agent, which can consult OpenClaw.
+- **Call MrVedsil** sends `voice_mode: openclaw_direct` and calls OpenClaw directly,
+  using ElevenLabs for speech only.
+
+One daemon answers both modes. It builds each optional provider when first
+requested and keeps the configured default for older clients that omit
+`voice_mode`. If the explicitly requested mode cannot be configured, the daemon
+declines the call and leaves a message; it never answers with a different mode.
+The same calling-tone preference and hold music apply to both buttons.
+
+The app, relay and daemon must all be updated for per-call selection. The relay
+stores and returns the mode on the call and its invite, including after restart.
+Existing calls migrate to `default`, preserving their state and identifiers.
+
+Use separate prompts when the hosted agent's instructions include delegation:
+
+```sh
+agentring serve --ai --provider elevenlabs \
+  --instructions @hosted-agent-prompt.txt \
+  --direct-instructions @direct-openclaw-prompt.txt
+```
+
+## Choose a mode on the Mac
 
 Call the iPhone with the new mode, while the usual daemon keeps answering inbound
 calls in its current mode:
@@ -56,12 +84,11 @@ To answer calls from the iPhone in direct mode, run one answering daemon with:
 agentring serve --ai --provider openclaw-elevenlabs
 ```
 
-Run a single answering daemon per relay. To return to the existing mode, restart
-that daemon with `--provider elevenlabs`. Alternatively set
-`AGENTRING_VOICE_PROVIDER` deliberately when selecting a permanent default. This
-first version selects the mode on the Mac; the iPhone has no new mode selector.
-Use a separate direct-mode instruction file rather than instructions telling
-the hosted ElevenLabs agent to delegate to OpenClaw.
+Run a single answering daemon per relay. `--provider` or
+`AGENTRING_VOICE_PROVIDER` selects its default for older clients. The two iPhone
+buttons choose their mode explicitly without changing that default. Use a
+separate direct-mode instruction file rather than instructions telling the
+hosted ElevenLabs agent to delegate to OpenClaw.
 
 Each call gets a fresh OpenClaw session, reused across its turns. The first turn
 sets the phone context and requests short, natural spoken answers. The daemon

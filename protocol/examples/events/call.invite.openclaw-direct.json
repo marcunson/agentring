@@ -1,0 +1,13 @@
+{
+  "type": "call.invite",
+  "id": "evt_01JB0000000000000000000001",
+  "ts": 1761200000000,
+  "seq": 41,
+  "call_id": "call_01JB0000000000000000000002",
+  "direction": "user_to_agent",
+  "agent_name": "Mac mini",
+  "voice_mode": "openclaw_direct",
+  "reason": "",
+  "priority": "normal",
+  "expires_at": 1761200030000
+}

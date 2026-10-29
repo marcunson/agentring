@@ -231,7 +231,7 @@ no answer in 30 s → state missed, event call.missed → daemon sends msg.new(r
 ### Inbound call (user → agent) (M4)
 
 ```
-app: POST /v1/calls {reason?}  (device)  → 201 { call, join }  → app joins & waits
+app: POST /v1/calls {reason?, voice_mode?}  (device)  → 201 { call, join }  → app joins & waits
   (503 agent_offline if no daemon WebSocket is connected)
 relay: event call.invite(direction=user_to_agent) → WS
 daemon: POST /v1/calls/{id}/accept → join → starts worker
@@ -239,6 +239,13 @@ daemon: POST /v1/calls/{id}/accept → join → starts worker
 
 App side ("Call agent" button, enabled while the relay WebSocket is connected
 and the agent is online):
+
+- The iPhone's **Call agent** sends `voice_mode: elevenlabs`; **Call MrVedsil**
+  sends `voice_mode: openclaw_direct`. The relay persists it on the call and
+  includes it in `call.invite`. Omitted or `default` preserves the daemon's
+  default provider. One daemon routes both explicit modes. If a requested mode
+  is unavailable it declines the call and posts an explanatory message instead
+  of answering with another provider. Older clients may omit the field.
 
 - The phone joins the LiveKit room right away with the `join` from the 201 and
   shows "Calling <agent>…". It switches to the in-call screen on the first of:

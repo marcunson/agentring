@@ -103,6 +103,9 @@ class RelayClient:
     def accept_call(self, call_id: str) -> dict:
         return self._request("POST", f"/v1/calls/{call_id}/accept")
 
+    def decline_call(self, call_id: str) -> dict:
+        return self._request("POST", f"/v1/calls/{call_id}/decline")
+
     def end_call(self, call_id: str) -> dict:
         return self._request("POST", f"/v1/calls/{call_id}/end")
 

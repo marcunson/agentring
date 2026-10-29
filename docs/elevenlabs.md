@@ -8,7 +8,8 @@ not replace the conversational LLM in this integration.
 For an additional mode where OpenClaw is the conversational agent and ElevenLabs
 only transcribes and speaks, see [direct OpenClaw voice](openclaw-direct.md).
 Select it explicitly with `--provider openclaw-elevenlabs`; the existing mode
-and its hosted agent remain available.
+and its hosted agent remain available. The iPhone home screen also offers
+**Call agent** for this hosted agent and **Call MrVedsil** for direct OpenClaw.
 
 The phone app, relay, LiveKit and push configuration stay the same. Only the daemon
 connects to ElevenLabs; API keys and signed URLs never go to the phone. Audio and

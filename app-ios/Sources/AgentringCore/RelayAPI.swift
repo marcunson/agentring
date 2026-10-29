@@ -54,6 +54,10 @@ final class RelayAPI {
         try RelayJSON.decoder().decode(T.self, from: await request(path, method: method, body: body))
     }
 
+    func startCall(to destination: CallDestination) async throws -> CallWithJoin {
+        try await value("/v1/calls", method: "POST", body: destination.requestBody)
+    }
+
     func socket(after: Int64) -> URLSessionWebSocketTask {
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
         components.scheme = baseURL.scheme == "https" ? "wss" : "ws"

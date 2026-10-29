@@ -169,6 +169,12 @@ export interface paths {
          *     receives a `call.invite` event and gets its join info from
          *     `POST /v1/calls/{call_id}/accept`.
          *
+         *     `voice_mode` selects the conversation handler for this call. Omitted or
+         *     `default` uses the daemon's configured provider; `elevenlabs` selects the
+         *     hosted ElevenLabs Agent, and `openclaw_direct` selects OpenClaw with
+         *     ElevenLabs speech only. An explicitly requested mode that is not configured
+         *     must be declined by the daemon, never answered using another mode.
+         *
          *     Targeted calls: the agent may pass `device_ids` to ring only those phones.
          *     The call is then private to them: the other phones get none of its events
          *     (WebSocket, push or `GET /v1/events`), do not see it in `GET /v1/calls`,
@@ -576,6 +582,11 @@ export interface components {
             apns_token?: string | null;
             voip_token?: string | null;
         };
+        /**
+         * @description Per-call conversation handler; omitted means the configured default.
+         * @enum {string}
+         */
+        VoiceMode: "default" | "elevenlabs" | "openclaw_direct";
         CreateCallRequest: {
             /** @description Required when the agent calls; optional when the user calls. */
             reason?: string;
@@ -583,6 +594,7 @@ export interface components {
             priority: components["schemas"]["Priority"];
             /** @description Display name override for this call (agent only). */
             agent_name?: string;
+            voice_mode?: components["schemas"]["VoiceMode"];
             /**
              * @description Agent only: ring only these paired, non-revoked phones (a targeted
              *     call) instead of every paired phone. Only they get the invite, can
@@ -600,6 +612,7 @@ export interface components {
             priority: components["schemas"]["Priority"];
             agent_name: string;
             created_at: components["schemas"]["Timestamp"];
+            voice_mode?: components["schemas"]["VoiceMode"];
             answered_at?: components["schemas"]["Timestamp"];
             ended_at?: components["schemas"]["Timestamp"];
             ended_by?: components["schemas"]["Actor"];
@@ -677,6 +690,7 @@ export interface components {
             call_id: components["schemas"]["CallId"];
             direction: components["schemas"]["CallDirection"];
             agent_name: string;
+            voice_mode?: components["schemas"]["VoiceMode"];
             /** @description Empty string if the user called without a reason. */
             reason: string;
             priority: components["schemas"]["Priority"];

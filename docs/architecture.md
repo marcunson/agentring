@@ -200,9 +200,11 @@ CI fails if generated code is stale or a fixture doesn't round-trip.
 - **Direct OpenClaw speech provider** (additional mode requested by the user):
   `openclaw-elevenlabs` uses ElevenLabs realtime STT and streamed TTS with the
   existing local OpenClaw command bridge as the conversational agent. The hosted
-  ElevenLabs Agents mode remains available. Mode selection is on the daemon / CLI
-  for the first version, without exposing the gateway or changing the phone / relay
-  protocol. A backend wait event reuses the session's local hold music. No new
+  ElevenLabs Agents mode remains available. The daemon / CLI chooses a default;
+  the iPhone's Call agent and Call MrVedsil buttons choose their provider through
+  the optional per-call `voice_mode` field. A single daemon routes both modes,
+  declining unavailable explicit modes instead of falling back. The gateway
+  stays private. A backend wait event reuses the session's local hold music. No new
   dependencies; see [openclaw-direct.md](openclaw-direct.md).
 
 - **ElevenLabs Agents voice backend** (iPhone adaptation, at the user's request):
