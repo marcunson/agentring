@@ -32,7 +32,8 @@ def agent_config(instructions: str, tools: list[Tool], *, name: str = "agentring
     """
     prompt: dict[str, Any] = {"prompt": instructions, "tools": [
         {"type": "client", "name": t.name, "description": t.description,
-         "parameters": t.parameters, "expects_response": True, "response_timeout_secs": 120}
+         "parameters": t.parameters, "expects_response": True, "response_timeout_secs": 120,
+         **({"pre_tool_speech": "force"} if t.name == "consult_agent" else {})}
         for t in tools
     ]}
     if model:

@@ -186,6 +186,7 @@ def test_build_and_export_with_consultations(agentring_home):
     cfg = json.loads(result.output)
     tools = cfg["conversation_config"]["agent"]["prompt"]["tools"]
     assert {t["name"] for t in tools} == {"consult_agent", "end_call"}
+    assert next(t for t in tools if t["name"] == "consult_agent")["pre_tool_speech"] == "force"
     assert all(t["type"] == "client" and t["expects_response"] for t in tools)
     assert cfg["platform_settings"]["auth"]["enable_auth"] is True
     assert cfg["conversation_config"]["tts"]["agent_output_audio_format"] == "pcm_16000"

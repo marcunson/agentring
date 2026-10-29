@@ -28,6 +28,7 @@ from livekit import rtc
 from .backend import (AudioOut, Interrupted, RealtimeBackend, SessionEnding, ToolCalls, ToolResult, TurnComplete,
                       Transcript, TranscriptCorrection)
 from .tools import Tool, ToolCall, _session, result_text
+from .hold_music import HoldMusic
 
 log = logging.getLogger("agentring.voice")
 
@@ -102,6 +103,7 @@ class VoiceAgent:
         ring_timeout_s: float = 75,
         max_duration_s: float | None = None,
         empty_room_grace_s: float = 10,
+        hold_music: bool = True,
     ):
         self.backend = backend
         self.instructions = instructions
@@ -114,6 +116,7 @@ class VoiceAgent:
         self.ring_timeout_s = ring_timeout_s
         self.max_duration_s = max_duration_s
         self.empty_room_grace_s = empty_room_grace_s
+        self.hold_music = hold_music
 
     async def run(self, info: CallInfo, join: dict[str, Any], *, relay: Any = None, end_call: bool = True,
                   stop: asyncio.Event | None = None) -> CallResult:
@@ -171,6 +174,11 @@ class CallSession:
         self._streams: list[rtc.AudioStream] = []
         self._frame = self.backend.output_rate // 100 * 2  # 10 ms of PCM16
         self._chunk = self.backend.input_rate // 25 * 2  # 40 ms per send
+        self._hold_tokens: set[object] = set()
+        self._hold_started_at = 0.0
+        self._hold_paused_until = 0.0
+        self._hold_music: HoldMusic | None = None
+        self._playing_hold = False
 
         self.room.on("participant_connected", self._on_join)
         self.room.on("participant_disconnected", self._on_leave)
@@ -197,11 +205,33 @@ class CallSession:
     def hang_up(self) -> None:
         """End the call after the model finishes what it is saying."""
         self._hangup_at = self._hangup_at or time.time()
+        self._clear_hold()
+
+    def start_hold(self, token: object) -> None:
+        """Track an actual agent job, including work that outlives its tool result."""
+        if not self.agent.hold_music or self.done.is_set() or self._hangup_at:
+            return
+        if not self._hold_tokens:
+            self._hold_started_at = time.time()
+        self._hold_tokens.add(token)
+
+    def end_hold(self, token: object) -> None:
+        self._hold_tokens.discard(token)
+        if not self._hold_tokens and self._playing_hold:
+            self.source.clear_queue()
+            self._playing_hold = False
+
+    def _clear_hold(self) -> None:
+        self._hold_tokens.clear()
+        if self._playing_hold:
+            self.source.clear_queue()
+            self._playing_hold = False
 
     def finish(self, reason: str) -> None:
         if not self.done.is_set():
             self.end_reason = self.end_reason or reason
             log.info("call %s ending: %s", self.info.call_id, self.end_reason)
+            self._clear_hold()
             self.done.set()
 
     # ------------------------------------------------------------ room events
@@ -269,19 +299,32 @@ class CallSession:
                 await self.backend.send_audio(pcm)
 
     async def _play_loop(self) -> None:
-        silence = b"\0" * self._frame
         while True:
-            if len(self.output) >= self._frame:
-                frame = bytes(self.output[: self._frame])
-                del self.output[: self._frame]
-            else:
-                frame = silence
-                if self._hangup_at:
-                    now = time.time()
-                    said_goodbye = now - self._hangup_at > 2 and now - self.last_agent_audio_at > 1.5
-                    if said_goodbye or now - self._hangup_at > 20:
-                        self.finish(END_CALL)
+            frame = self._next_audio_frame()
             await self.source.capture_frame(rtc.AudioFrame(frame, self.backend.output_rate, 1, self._frame // 2))
+
+    def _next_audio_frame(self) -> bytes:
+        if len(self.output) >= self._frame:
+            self._playing_hold = False
+            frame = bytes(self.output[:self._frame])
+            del self.output[:self._frame]
+            return frame
+        now = time.time()
+        if self._hangup_at:
+            said_goodbye = now - self._hangup_at > 2 and now - self.last_agent_audio_at > 1.5
+            if said_goodbye or now - self._hangup_at > 20:
+                self.finish(END_CALL)
+        if (self._hold_tokens and not self.done.is_set() and not self._hangup_at
+                and now - self._hold_started_at >= 0.5 and now >= self._hold_paused_until
+                and now - self.last_agent_audio_at >= 0.6 and now - self.last_user_speech_at >= 0.8):
+            if self._hold_music is None:
+                self._hold_music = HoldMusic(self.backend.output_rate)
+            if not self._playing_hold:
+                self._hold_music.fade_in()
+            self._playing_hold = True
+            return self._hold_music.read(self._frame // 2)
+        self._playing_hold = False
+        return b"\0" * self._frame
 
     async def _notes_loop(self) -> None:
         while True:
@@ -308,15 +351,23 @@ class CallSession:
             # In its own task: the call keeps listening and talking while a tool works.
             self._tasks.append(asyncio.create_task(self._answer_tools(ev.calls)))
         elif isinstance(ev, AudioOut):
+            if self._playing_hold:
+                self.source.clear_queue()  # remove buffered music before the first word
+                self._playing_hold = False
             self.output += ev.pcm
             self.last_agent_audio_at = time.time()
         elif isinstance(ev, Interrupted):
             self.output.clear()
             self.source.clear_queue()
+            self._playing_hold = False
+            self._hold_paused_until = time.time() + 1
         elif isinstance(ev, Transcript):
             self.partial[ev.role] += ev.text
             if ev.role == "user" and ev.text.strip():
                 self.last_user_speech_at = time.time()
+                if self._playing_hold:
+                    self.source.clear_queue()
+                    self._playing_hold = False
         elif isinstance(ev, TranscriptCorrection):
             for i in range(len(self.transcript) - 1, -1, -1):
                 if self.transcript[i] == (ev.role, ev.original.strip()):
@@ -431,6 +482,7 @@ class CallSession:
             self.finish("max_duration")
 
     async def stop(self, *, end_call: bool = True) -> None:
+        self._clear_hold()
         self.done.set()
         for t in self._tasks:
             t.cancel()

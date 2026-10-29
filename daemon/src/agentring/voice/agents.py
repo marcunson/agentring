@@ -185,12 +185,13 @@ class ConsultPrompts:
 
     description: str = (
         "Ask one of the user's own AI agents to find out or do something, in plain words. Agents can take "
-        "minutes: tell the user you're asking, then keep talking; you will be given the answer when it comes. "
+        "minutes: briefly tell the user you're asking and putting them on hold, then wait. "
+        "You will be given the answer when it comes; no need to fill the wait with small talk. "
         "Agents:\n{agents}"
     )
     task: str = "What you need from the agent: complete and self-contained, it doesn't hear the call."
-    working: str = ("{agent} is working on it; its answer will come to you in a note. Tell the user and carry on, "
-                    "don't make it up.")
+    working: str = ("{agent} is working on it; its answer will come to you in a note. Wait for that note. "
+                    "Do not invent progress or start small talk. If the user speaks, respond briefly.")
     answer: str = "({agent} answered “{task}”:)\n{answer}\n(Tell the user the gist, briefly.)"
     failed: str = "({agent} could not answer “{task}”: {answer}) Tell the user."
     busy: str = "{agent} is still busy with “{task}”; ask again when that one answers."
@@ -249,12 +250,19 @@ class Consultations:
 
     async def _ask(self, a: CommandAgent, task: str, session: Any) -> tuple[bool, str]:
         log.info("asking %s: %s", a.name, task[:200])
+        token = object()
+        start_hold, end_hold = getattr(session, "start_hold", None), getattr(session, "end_hold", None)
+        can_hold = callable(start_hold) and callable(end_hold)
         try:
+            if can_hold:
+                start_hold(token)
             ok, text = True, self._clip(await a.ask(task, call_id=session.info.call_id if session else None))
         except Exception as e:
             ok, text = False, str(e)[:500]
         finally:
             self._busy.pop(a.name, None)
+            if can_hold:
+                end_hold(token)
         log.info("%s %s: %s", a.name, "answered" if ok else "failed", text[:200])
         return ok, text
 

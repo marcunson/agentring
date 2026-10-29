@@ -3,6 +3,14 @@
 For ElevenLabs Agents instead of Gemini, see [ElevenLabs setup](elevenlabs.md).
 Both providers use the same phone app and local tool/agent bridge.
 
+When a call consults an agent such as OpenClaw, a quiet, locally generated hold
+music loop fills the wait. Speech takes priority, and the caller can still talk
+or hang up. Music follows the actual background job, including jobs that exceed
+the consultation's quick-answer timeout, and stops when it finishes, fails or
+is canceled. Returning agent speech clears any buffered music before playback.
+Library users can disable it with `VoiceAgent(..., hold_music=False)`. No extra
+audio service or phone update is required.
+
 When a call is answered, a realtime speech-to-speech model talks to the user, can
 use your tools while the call goes on, and hangs up by itself when the user says
 goodbye. It works both ways: the agent calling the phone, and the phone calling
