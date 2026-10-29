@@ -209,7 +209,7 @@ struct MessagesView: View {
                             defer { sending = false }
                             do {
                                 try await model.send(value, clientId: clientId)
-                                text = ""; clientId = UUID().uuidString; composerFocused = false
+                                text = ""; clientId = UUID().uuidString; dismissComposer()
                             }
                             catch { model.present(error) }
                         }
@@ -221,7 +221,7 @@ struct MessagesView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         Button {
-                            composerFocused = false
+                            dismissComposer()
                             onBack()
                         } label: { Label("Agent", systemImage: "chevron.left") }
                             .accessibilityLabel("Back to Agent")
@@ -229,12 +229,17 @@ struct MessagesView: View {
                     }
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
-                        Button("Done") { composerFocused = false }
+                        Button("Done") { dismissComposer() }
                             .accessibilityIdentifier("dismiss-message-keyboard")
                     }
                 }
-                .onDisappear { composerFocused = false }
+                .onDisappear { dismissComposer() }
         }
+    }
+
+    private func dismissComposer() {
+        composerFocused = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 
