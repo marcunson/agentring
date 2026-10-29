@@ -106,6 +106,30 @@ from the app, run `agentring serve --ai` next to your agents.
 
 ## iOS behavior and limits
 
+### Caller photo and Contact Poster
+
+In the iPhone Contacts app, create a contact for the agent and add a photo and
+Contact Poster. Give the contact an email address or phone number, then open
+agentring **Settings → Caller photo → Choose caller contact** and select that
+address. It identifies the contact for CallKit; the call continues through your
+relay and LiveKit.
+
+CallKit matches that address to Contacts and uses the contact's name and poster
+or photo. iOS controls the final banner/full-screen layout; agentring cannot inject
+an arbitrary image into the system call screen or force a poster while locked.
+Use **Use default caller** to remove the association. The choice is local to this
+iPhone and relay; disconnecting the phone clears it without editing the contact.
+
+The system contact picker shares only the selected contact property. The app does
+not request general Contacts access, read your address book or upload contact
+details. Keep the contact's selected address unchanged, or select it again after
+editing it. Changes to its photo or poster are managed by iOS.
+
+Apple references: [CallKit contact matching](https://developer.apple.com/documentation/callkit/making-and-receiving-voip-calls),
+[one-time contact picker](https://developer.apple.com/documentation/contactsui/cncontactpickerviewcontroller).
+
+### Background calls and privacy
+
 - Focus/silent mode follow iOS rules. The Android urgent alarm behavior is not
   replicated; this app does not request Apple's restricted Critical Alerts entitlement.
 - iOS suspends background WebSockets. PushKit wakes incoming calls; messages use

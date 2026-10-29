@@ -13,6 +13,7 @@ final class AppModel: ObservableObject {
     @Published var busy = false
     @Published var notificationsEnabled = false
     @Published var pushRegistration = "Not registered"
+    @Published private(set) var callerIdentity: CallerIdentity?
     lazy var calls = CallManager(model: self)
     var apnsToken: String?
     var voipToken: String?
@@ -29,6 +30,7 @@ final class AppModel: ObservableObject {
         }
         #endif
         credentials = KeychainStore.load()
+        if let credentials { callerIdentity = CallerIdentityPreferences.load(relayId: credentials.relayId) }
         if credentials != nil, let data = try? Data(contentsOf: Self.cacheURL) {
             messages = (try? RelayJSON.decoder().decode([Message].self, from: data)) ?? []
         }
@@ -37,6 +39,12 @@ final class AppModel: ObservableObject {
     var api: RelayAPI? {
         guard let credentials else { return nil }
         return try? RelayAPI(url: credentials.relayUrl, jwt: credentials.deviceJwt)
+    }
+
+    func setCallerIdentity(_ identity: CallerIdentity?) {
+        guard let credentials else { return }
+        CallerIdentityPreferences.save(identity, relayId: credentials.relayId)
+        callerIdentity = identity
     }
 
     private static var cacheURL: URL {
@@ -58,6 +66,7 @@ final class AppModel: ObservableObject {
                 pushSecret: result.pushSecret, relayId: result.relayId, agentName: result.agentName)
             try KeychainStore.save(saved)
             credentials = saved
+            callerIdentity = CallerIdentityPreferences.load(relayId: saved.relayId)
             messages = []
             lastSeq = 0
             error = nil
@@ -202,6 +211,7 @@ final class AppModel: ObservableObject {
             } catch { present(error); return }
         }
         stopStream()
+        setCallerIdentity(nil)
         KeychainStore.clear()
         credentials = nil; messages = []; status = nil; lastSeq = 0
         try? FileManager.default.removeItem(at: Self.cacheURL)

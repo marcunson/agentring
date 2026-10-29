@@ -28,7 +28,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
         config.supportsVideo = false
         config.maximumCallsPerCallGroup = 1
         config.maximumCallGroups = 1
-        config.supportedHandleTypes = [.generic]
+        config.supportedHandleTypes = [.generic, .emailAddress, .phoneNumber]
         config.includesCallsInRecents = false
         provider = CXProvider(configuration: config)
         super.init()
@@ -43,8 +43,9 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
         pendingIncoming.insert(id)
         let callUUID = PushVerifier.callUUID(id)
         let update = CXCallUpdate()
-        update.remoteHandle = CXHandle(type: .generic, value: event.agentName ?? "Agent")
-        update.localizedCallerName = event.agentName ?? "Agent"
+        update.remoteHandle = callerHandle(fallback: event.agentName ?? "Agent")
+        // Let iOS resolve the selected contact's name, photo and Contact Poster.
+        if model.callerIdentity == nil { update.localizedCallerName = event.agentName ?? "Agent" }
         update.supportsHolding = false
         update.supportsGrouping = false
         update.supportsUngrouping = false
@@ -99,8 +100,9 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
         joinTarget = join
         let id = UUID()
         do {
-            try await controller.request(CXTransaction(action: CXStartCallAction(call: id,
-                handle: CXHandle(type: .generic, value: model.credentials?.agentName ?? "Agent"))))
+            let action = CXStartCallAction(call: id, handle: callerHandle(fallback: model.credentials?.agentName ?? "Agent"))
+            action.contactIdentifier = model.callerIdentity?.contactIdentifier
+            try await controller.request(CXTransaction(action: action))
         } catch { model.present(error) }
     }
 
@@ -220,6 +222,11 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
     }
 
     func providerDidReset(_ provider: CXProvider) { Task { await failAndEnd() } }
+
+    private func callerHandle(fallback: String) -> CXHandle {
+        guard let identity = model.callerIdentity else { return CXHandle(type: .generic, value: fallback) }
+        return CXHandle(type: identity.kind == .email ? .emailAddress : .phoneNumber, value: identity.address)
+    }
 
     private func configureAudio() throws {
         try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .voiceChat, options: [.allowBluetooth])

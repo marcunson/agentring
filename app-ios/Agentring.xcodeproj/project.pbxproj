@@ -17,6 +17,8 @@
 		CA905F6BFFF0547E43D8CA84 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF8AAB372590A333E24F5D8 /* KeychainStore.swift */; };
 		E6A4031D68C4DE0EBFA3395B /* AgentringApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2839540046A3335EF2F27EA6 /* AgentringApp.swift */; };
 		F89C0B8C1145F8022DC13335 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3E64DFC3AD66FF82CE17E3 /* AppModel.swift */; };
+		838F22949F7AAC50FB040027 /* CallerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2A8456020724CEFF8EB627 /* CallerIdentity.swift */; };
+		66FF52C1C607C8B71367412B /* CallerContactPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09151BF521C5FD19217D2880 /* CallerContactPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,6 +43,8 @@
 		8C8642F44BE32B6007909F55 /* Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocol.swift; sourceTree = "<group>"; };
 		AECD6160B60B006F5A244523 /* RelayAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayAPI.swift; sourceTree = "<group>"; };
 		F59934E9DE8171831AC472FF /* Agentring.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Agentring.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D2A8456020724CEFF8EB627 /* CallerIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallerIdentity.swift; sourceTree = "<group>"; };
+		09151BF521C5FD19217D2880 /* CallerContactPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallerContactPicker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +89,7 @@
 			children = (
 				8C8642F44BE32B6007909F55 /* Protocol.swift */,
 				AECD6160B60B006F5A244523 /* RelayAPI.swift */,
+				0D2A8456020724CEFF8EB627 /* CallerIdentity.swift */,
 			);
 			name = AgentringCore;
 			path = Sources/AgentringCore;
@@ -98,6 +103,7 @@
 				2C3E64DFC3AD66FF82CE17E3 /* AppModel.swift */,
 				2BD71229EA2CDA93B35D79DB /* CallManager.swift */,
 				6AF8AAB372590A333E24F5D8 /* KeychainStore.swift */,
+				09151BF521C5FD19217D2880 /* CallerContactPicker.swift */,
 			);
 			name = Agentring;
 			path = Sources/Agentring;
@@ -225,8 +231,10 @@
 				F89C0B8C1145F8022DC13335 /* AppModel.swift in Sources */,
 				ABF2CEF7672C56747B5471FE /* CallManager.swift in Sources */,
 				CA905F6BFFF0547E43D8CA84 /* KeychainStore.swift in Sources */,
+				66FF52C1C607C8B71367412B /* CallerContactPicker.swift in Sources */,
 				51C10AFD7131EB631385BB24 /* Protocol.swift in Sources */,
 				586F8082DAFD296F01BD3CD2 /* RelayAPI.swift in Sources */,
+				838F22949F7AAC50FB040027 /* CallerIdentity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

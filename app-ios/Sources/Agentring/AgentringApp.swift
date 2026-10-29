@@ -241,6 +241,7 @@ struct MessagesView: View {
 struct SettingsView: View {
     @ObservedObject var model: AppModel
     @State private var confirmForget = false
+    @State private var choosingCaller = false
     var body: some View {
         NavigationStack {
             Form {
@@ -248,6 +249,23 @@ struct SettingsView: View {
                     LabeledContent("Agent", value: model.credentials?.agentName ?? "")
                     Text(model.credentials?.relayUrl ?? "").font(.footnote).textSelection(.enabled)
                     LabeledContent("Connection", value: model.connection)
+                }
+                Section {
+                    if let identity = model.callerIdentity {
+                        LabeledContent("Contact", value: identity.displayName)
+                        Text(identity.address).font(.footnote).foregroundStyle(.secondary)
+                    }
+                    Button(model.callerIdentity == nil ? "Choose caller contact" : "Change caller contact") {
+                        choosingCaller = true
+                    }.accessibilityIdentifier("choose-caller-contact")
+                    if model.callerIdentity != nil {
+                        Button("Use default caller", role: .destructive) { model.setCallerIdentity(nil) }
+                            .accessibilityIdentifier("clear-caller-contact")
+                    }
+                } header: {
+                    Text("Caller photo")
+                } footer: {
+                    Text("Create a contact for your agent in Contacts, add its photo and Contact Poster, then choose its email or phone number here. iOS uses the contact for the native call screen; calls still use your relay. The choice is stored only on this iPhone.")
                 }
                 Section("Calls & notifications") {
                     LabeledContent("Apple push", value: model.pushRegistration)
@@ -265,6 +283,11 @@ struct SettingsView: View {
                     Button("Disconnect this iPhone", role: .destructive) { confirmForget = true }
                 }
             }.navigationTitle("Settings")
+                .sheet(isPresented: $choosingCaller) {
+                    CallerContactPicker(onSelect: { identity in
+                        model.setCallerIdentity(identity); choosingCaller = false
+                    }, onCancel: { choosingCaller = false })
+                }
                 .confirmationDialog("Disconnect this iPhone?", isPresented: $confirmForget, titleVisibility: .visible) {
                     Button("Disconnect", role: .destructive) { Task { await model.forget() } }
                 } message: { Text("You will need a new pairing code to connect again.") }
