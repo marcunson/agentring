@@ -13,8 +13,9 @@ openclaw mcp set agentring '{"command":"agentring","args":["mcp"]}'
 cp -r ../../skills/agentring ~/.openclaw/skills/  # when to message and when to call
 ```
 
-Calls need the voice extra and a Gemini API key (free tier available at
-https://aistudio.google.com/apikey):
+Calls need the voice extra and a voice provider: Gemini (free tier available at
+https://aistudio.google.com/apikey), or [ElevenLabs Agents](../../docs/elevenlabs.md).
+For Gemini:
 
 ```bash
 uv tool install 'agentring[voice]'
@@ -25,25 +26,33 @@ Then, for example: *"Check my inbox every hour; if something is urgent, call me.
 
 ## You reach OpenClaw by phone
 
-`~/.agentring/agents.yaml`:
+To let the voice assistant consult your existing OpenClaw gateway, add this to
+`$AGENTRING_HOME/agents.yaml` (normally `~/.agentring/agents.yaml`):
 
 ```yaml
 agents:
   openclaw:
-    description: My OpenClaw assistant. Messages, calendar, reminders, home.
-    command: [sh, -c, 'exec openclaw agent --agent main --session-id "agentring-${AGENTRING_CALL_ID:-test}" --message="$1"', sh, "{task}"]
-    timeout_s: 600
+    description: Ask my OpenClaw assistant to answer questions or carry out requested tasks.
+    command: [/absolute/path/to/python3, /absolute/path/to/agentring/examples/openclaw/ask.py]
+    timeout_s: 130
+    env:
+      AGENTRING_OPENCLAW_BIN: /absolute/path/to/openclaw
+      AGENTRING_OPENCLAW_AGENT: main
 ```
 
-`openclaw agent` runs one turn through your gateway, so keep it running
-(`openclaw gateway`). The `sh -c` script is fixed text: the task arrives as `$1` and
-is never parsed by the shell. The call id gives each call its own session, so a
-follow-up question keeps the context. Change `main` to use another of your agents.
+The adapter reads the task from stdin, passes it through a private temporary file
+and extracts only assistant text from the CLI JSON response. It uses a separate session for each call, preserving context
+between questions in that call. It never passes `--deliver`, changes approval
+settings or retries a task automatically after an uncertain result. OpenClaw
+keeps its existing model credentials and tool permissions.
 
-```bash
-agentring agents ask openclaw "What's on my calendar tomorrow?"   # check it works
-agentring serve --ai                                               # answers "Call agent" from the app
-```
+Keep the OpenClaw gateway running. Change `main` in the configuration to use
+another of your agents. The adapter requires an OpenClaw CLI with `--message-file`
+and `--session-key` support.
+
+Verify `agentring agents ask openclaw "Reply briefly without using tools"`, then
+follow [ElevenLabs setup](../../docs/elevenlabs.md) to export/update the dedicated
+hosted agent with the `consult_agent` client tool and restart `agentring serve --ai`.
 
 On the call: *"Ask OpenClaw to remind me to call the bank at five."* The voice AI
 asks it, tells you it's on it, and reads you the answer when it comes. If you've
