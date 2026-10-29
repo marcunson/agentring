@@ -21,6 +21,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
     private var poll: Task<Void, Never>?
     private var joinTarget: String?
     private var pendingIncoming: Set<String> = []
+    private let ringback = OutgoingRingback()
 
     init(model: AppModel) {
         self.model = model
@@ -148,24 +149,53 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
         guard !hasCall, let api = model.api else { action.fail(); return }
         uuid = action.callUUID; hasCall = true; incoming = false; phase = "Calling…"
         let target = joinTarget; joinTarget = nil
+        let playTones = target == nil && RingbackTone.ringCount() == 2
+        do {
+            try configureAudio()
+            if playTones { try ringback.prepare() }
+        } catch {
+            action.fail(); model.present(error)
+            Task { await failAndEnd() }
+            return
+        }
         provider.reportOutgoingCall(with: action.callUUID, startedConnectingAt: Date())
+        // Fulfill initiation promptly so CallKit activates audio for local ringback.
+        action.fulfill()
         Task {
             do {
-                try configureAudio()
+                if playTones {
+                    if audioActive { ringback.start() }
+                    // A missing activation/delegate callback must not leave a call stuck.
+                    let timeout = Task { [weak self] in
+                        do { try await Task.sleep(nanoseconds: 12_000_000_000) }
+                        catch { return }
+                        if self?.uuid == action.callUUID { self?.ringback.stop() }
+                    }
+                    let finished = await ringback.waitForCompletion()
+                    timeout.cancel()
+                    guard uuid == action.callUUID else { return }
+                    guard finished else {
+                        throw NSError(domain: "AgentringAudio", code: 2,
+                            userInfo: [NSLocalizedDescriptionKey: "Could not play calling tones. Try again or select None in Settings."])
+                    }
+                }
+                guard uuid == action.callUUID else { return }
                 let path = target.map { "/v1/calls/\($0)/join" } ?? "/v1/calls"
                 let result: CallWithJoin = try await api.value(path, method: "POST", body: target == nil ? [:] : nil)
-                guard uuid == action.callUUID else { _ = try? await api.request("/v1/calls/\(result.call.callId)/end", method: "POST"); action.fail(); return }
+                guard uuid == action.callUUID else { _ = try? await api.request("/v1/calls/\(result.call.callId)/end", method: "POST"); return }
                 callId = result.call.callId
                 try await connect(result.join, uuid: action.callUUID)
                 joined = true
-                action.fulfill()
                 model.startStream()
                 if result.call.state == "active" {
                     phase = "Connected"
                     provider.reportOutgoingCall(with: action.callUUID, connectedAt: Date())
                 }
                 monitor(id: result.call.callId)
-            } catch { action.fail(); model.present(error); await failAndEnd() }
+            } catch {
+                guard uuid == action.callUUID else { return }
+                model.present(error); await failAndEnd()
+            }
         }
     }
 
@@ -210,6 +240,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
 
     func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
         audioActive = true
+        ringback.start()
         Task {
             do { try await room?.localParticipant.setMicrophone(enabled: !muted) }
             catch { model.present(error); await failAndEnd() }
@@ -218,6 +249,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
 
     func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
         audioActive = false
+        ringback.pause()
         Task { try? await room?.localParticipant.setMicrophone(enabled: false) }
     }
 
@@ -279,6 +311,7 @@ final class CallManager: NSObject, ObservableObject, @preconcurrency CXProviderD
 
     private func finish(reason: CXCallEndedReason, report: Bool = true) async {
         poll?.cancel(); poll = nil
+        ringback.stop()
         if report, let uuid { provider.reportCall(with: uuid, endedAt: Date(), reason: reason) }
         let oldRoom = room
         room = nil; uuid = nil; callId = nil; hasCall = false; joined = false

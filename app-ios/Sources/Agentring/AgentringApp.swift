@@ -247,6 +247,7 @@ struct SettingsView: View {
     @ObservedObject var model: AppModel
     @State private var confirmForget = false
     @State private var choosingCaller = false
+    @AppStorage(RingbackTone.preferenceKey) private var outgoingRingCount = 2
     var body: some View {
         NavigationStack {
             Form {
@@ -273,6 +274,12 @@ struct SettingsView: View {
                     Text("Create a contact for your agent in Contacts, add its photo and Contact Poster, then choose its email or phone number here. iOS uses the contact for the native call screen; calls still use your relay. The choice is stored only on this iPhone.")
                 }
                 Section("Calls & notifications") {
+                    Picker("Calling tones", selection: $outgoingRingCount) {
+                        Text("None").tag(0)
+                        Text("Two rings").tag(2)
+                    }.accessibilityIdentifier("outgoing-calling-tones")
+                    Text("Two rings plays two tones before connecting a new call to your agent. None connects immediately.")
+                        .font(.footnote).foregroundStyle(.secondary)
                     LabeledContent("Apple push", value: model.pushRegistration)
                     LabeledContent("Relay push", value: model.status?.pushProvider ?? "Unknown")
                     Button("Enable microphone & notifications") { Task { await model.permissions() } }

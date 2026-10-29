@@ -130,6 +130,13 @@ Apple references: [CallKit contact matching](https://developer.apple.com/documen
 
 ### Background calls and privacy
 
+- **Settings → Calls & notifications → Calling tones** controls outgoing calls:
+  **Two rings** plays two local one-second tones separated by two seconds of
+  silence, then connects to the agent. **None** connects immediately. The choice
+  is stored on the iPhone. Incoming calls and joining an existing call do not use
+  these tones. Hanging up during the tones cancels without placing a relay call.
+  CallKit owns audio activation and routing, including earpiece and Bluetooth.
+
 - Focus/silent mode follow iOS rules. The Android urgent alarm behavior is not
   replicated; this app does not request Apple's restricted Critical Alerts entitlement.
 - iOS suspends background WebSockets. PushKit wakes incoming calls; messages use
